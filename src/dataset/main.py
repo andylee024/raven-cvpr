@@ -155,7 +155,7 @@ def fuse(args, all_configs):
             f.write(dom)
         if target == predicted:
             acc += 1
-    print "Accuracy: {}".format(float(acc) / (args.num_samples * len(all_configs)))
+    print(f"Accuracy: {float(acc) / (args.num_samples * len(all_configs))}")
 
 
 def separate(args, all_configs):
@@ -284,14 +284,14 @@ def separate(args, all_configs):
             
             if target == predicted:
                 acc += 1
-        print "Accuracy of {}: {}".format(key, float(acc) / args.num_samples)
+        print("Accuracy of {}: {}".format(key, float(acc) / args.num_samples))
 
 
 def main():
     main_arg_parser = argparse.ArgumentParser(description="parser for RAVEN")
-    main_arg_parser.add_argument("--num-samples", type=int, default=20000,
+    main_arg_parser.add_argument("--num-samples", type=int, default=10,
                                  help="number of samples for each component configuration")
-    main_arg_parser.add_argument("--save-dir", type=str, default="~/Datasets/",
+    main_arg_parser.add_argument("--save-dir", type=str, default="/Users/andylee/Projects/raven-cvpr/output",
                                  help="path to folder where the generated dataset will be saved.")
     main_arg_parser.add_argument("--seed", type=int, default=1234,
                                  help="random seed for dataset generation")
