@@ -80,11 +80,16 @@ def get_mask(entity_bbox, entity_type, entity_size, entity_angle):
 def rle_encode(img):
     '''
     img: numpy array, 1 - mask, 0 - background
-    Returns run length as string formated
+    Returns run length as string formatted
     '''
     pixels = img.flatten()
     pixels = np.concatenate([[0], pixels, [0]])
     runs = np.where(pixels[1:] != pixels[:-1])[0] + 1
+
+    # TODO : hack (i don't understand this so remove later)
+    if len(runs) % 2 != 0:
+        runs = np.append(runs, len(pixels) - 1)
+
     runs[1::2] -= runs[::2]
     return "[" + ",".join(str(x) for x in runs) + "]"
  

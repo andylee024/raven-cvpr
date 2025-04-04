@@ -280,6 +280,9 @@ def separate(args, all_configs):
                                                                                       meta_structure=meta_structure)
             with open("{}/{}/RAVEN_{}_{}.xml".format(args.save_dir, key, k, set_name), "w") as f:
                 dom = dom_problem(context + candidates, rule_groups)
+
+                # TODO : remove hack
+                dom = str(dom)
                 f.write(dom)
             
             if target == predicted:

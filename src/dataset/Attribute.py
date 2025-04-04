@@ -57,7 +57,7 @@ class Number(Attribute):
         # max_level: max level index
         min_level = max(self.min_level, min_level)
         max_level = min(self.max_level, max_level)
-        self.value_level = np.random.choice(range(min_level, max_level + 1))
+        self.value_level = np.random.choice(range(int(min_level), int(max_level) + 1))
 
     def sample_new(self, min_level=None, max_level=None, previous_values=None):
         """Sample new values for generating the answer set.
@@ -137,13 +137,13 @@ class Size(Attribute):
     def sample(self, min_level=SIZE_MIN, max_level=SIZE_MAX):
         min_level = max(self.min_level, min_level)
         max_level = min(self.max_level, max_level)
-        self.value_level = np.random.choice(range(min_level, max_level + 1))   
+        self.value_level = np.random.choice(range(int(min_level), int(max_level) + 1))   
 
     def sample_new(self, min_level=None, max_level=None, previous_values=None):
         if min_level is None or max_level is None:
-            values = range(self.min_level, self.max_level + 1)
+            values = range(int(self.min_level), int(self.max_level) + 1)
         else:
-            values = range(min_level, max_level + 1)
+            values = range(int(min_level), int(max_level) + 1)
         if not previous_values:
             available = set(values) - set(self.previous_values) - set([self.value_level])
         else:
@@ -175,13 +175,18 @@ class Color(Attribute):
     def sample(self, min_level=COLOR_MIN, max_level=COLOR_MAX):
         min_level = max(self.min_level, min_level)
         max_level = min(self.max_level, max_level)
+        
+        # TODO : hack (i don't understand this so remove later)
+        min_level = int(min_level)
+        max_level = int(max_level)
+
         self.value_level = np.random.choice(range(min_level, max_level + 1))
 
     def sample_new(self, min_level=None, max_level=None, previous_values=None):
         if min_level is None or max_level is None:
-            values = range(self.min_level, self.max_level + 1)
+            values = range(int(self.min_level), int(self.max_level) + 1)
         else:
-            values = range(min_level, max_level + 1)
+            values = range(int(min_level), int(max_level) + 1)
         if not previous_values:
             available = set(values) - set(self.previous_values) - set([self.value_level])
         else:
@@ -217,9 +222,9 @@ class Angle(Attribute):
 
     def sample_new(self, min_level=None, max_level=None, previous_values=None):
         if min_level is None or max_level is None:
-            values = range(self.min_level, self.max_level + 1)
+            values = range(int(self.min_level), int(self.max_level) + 1)
         else:
-            values = range(min_level, max_level + 1)
+            values = range(int(min_level), int(max_level) + 1)
         if not previous_values:
             available = set(values) - set(self.previous_values) - set([self.value_level])
         else:
