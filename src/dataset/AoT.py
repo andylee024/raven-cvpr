@@ -8,6 +8,7 @@ from scipy.special import comb
 
 from dataset.Attribute import Angle, Color, Number, Position, Size, Type, Uniformity
 from dataset.constraints import rule_constraint
+from dataset.core.aot.operations.pruner import AoTPruner
 
 
 class AoTNode(object):
@@ -88,24 +89,30 @@ class Root(AoTNode):
     def resample(self, change_number=False):
         self._resample(change_number)
 
-    def prune(self, rule_groups):
+    def prune(self, rule_groups, new_implementation=True):
         """Prune the AoT such that all branches satisfy the constraints. 
         Arguments:
             rule_groups(list of list of Rule): each list of Rule applies to a component
+            new_implementation(bool): Whether to use the new AoTPruner implementation
         Returns:
             new_node(Root): a newly instantiated node with branches all satisfying the constraints;
                 None if no branches satisfy all the constraints
         """
-        new_node = Root(self.name)
-        for structure in self.children:
-            if len(structure.children) == len(rule_groups):
-                new_child = structure._prune(rule_groups)
-                if new_child is not None:
-                    new_node.insert(new_child)
-        # during real execution, this should never happens
-        if len(new_node.children) == 0:
-            new_node = None
-        return new_node
+        if new_implementation:
+            pruner = AoTPruner()
+            return pruner.prune_root(self, rule_groups)
+
+        else:
+            new_node = Root(self.name)
+            for structure in self.children:
+                if len(structure.children) == len(rule_groups):
+                    new_child = structure._prune(rule_groups)
+                    if new_child is not None:
+                        new_node.insert(new_child)
+            # during real execution, this should never happens
+            if len(new_node.children) == 0:
+                new_node = None
+            return new_node
 
     def prepare(self):
         """This function prepares the AoT for rendering.
@@ -151,13 +158,17 @@ class Structure(AoTNode):
             new_node.insert(child._sample())
         return new_node
     
-    def _prune(self, rule_groups):
-        new_node = Structure(self.name)
-        for i in range(len(self.children)):
-            child = self.children[i]
-            # if any of the components fails to satisfy the constraint
-            # the structure could not be chosen
-            new_child = child._prune(rule_groups[i])
+    def _prune(self, rule_groups, new_implementation=True):
+        if new_implementation:
+            pruner = AoTPruner()
+            return pruner.prune_structure(self, rule_groups)
+        else:
+            new_node = Structure(self.name)
+            for i in range(len(self.children)):
+                child = self.children[i]
+                # if any of the components fails to satisfy the constraint
+                # the structure could not be chosen
+                new_child = child._prune(rule_groups[i])
             if new_child is None:
                 return None
             new_node.insert(new_child)
@@ -180,10 +191,15 @@ class Component(AoTNode):
         new_node.insert(selected._sample())
         return new_node
 
-    def _prune(self, rule_group):
-        new_node = Component(self.name)
-        for child in self.children:
-            new_child = child._update_constraint(rule_group)
+    def _prune(self, rule_group, new_implementation=True):
+        if new_implementation:
+            pruner = AoTPruner()
+            return pruner.prune_component(self, rule_group)
+
+        else:
+            new_node = Component(self.name)
+            for child in self.children:
+                new_child = child._update_constraint(rule_group)
             if new_child is not None:
                 new_node.insert(new_child)
         if len(new_node.children) == 0:
@@ -356,7 +372,7 @@ class Layout(AoTNode):
         return Layout(self.name, new_layout_constraint, new_entity_constraint,
                                  self.orig_layout_constraint, self.orig_entity_constraint,
                                  self.sample_new_num_count)
-    
+
     def reset_constraint(self, attr):
         attr_name = attr.lower()
         instance = getattr(self, attr_name)

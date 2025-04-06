@@ -5,7 +5,7 @@ import numpy as np
 from scipy.special import comb
 
 from dataset.const import MAX_COMPONENTS, RULE_ATTR
-from dataset.Rule import Rule_Wrapper
+from dataset.legacy.Rule import Rule_Wrapper
 
 
 def sample_rules():

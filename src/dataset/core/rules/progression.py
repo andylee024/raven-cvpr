@@ -18,6 +18,7 @@ class ProgressionRule(Rule):
         """
         super().__init__(attr, value, component_idx)
         self.state["first_col"] = True  # Flag for tracking first application
+        self.name = "Progression" # Maintains backwards compatibility
     
     def apply(self, source_panel, target_panel=None):
         """Apply progression to generate the next panel.

@@ -19,7 +19,7 @@ from build_tree import (build_center_single, build_distribute_four,
 from const import IMAGE_SIZE, RULE_ATTR
 from rendering import (generate_matrix, generate_matrix_answer, imsave, imshow,
                        render_panel)
-from Rule import Rule_Wrapper
+from legacy.Rule import Rule_Wrapper
 from sampling import sample_attr, sample_attr_avail, sample_rules
 from serialize import dom_problem, serialize_aot, serialize_rules
 from solver import solve
