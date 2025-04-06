@@ -85,15 +85,20 @@ class Progression(Rule):
         self.first_col = True
 
     def apply_rule(self, aot, in_aot=None):
+
         current_layout = aot.children[0].children[self.component_idx].children[0]
+
+        # access layer
         if in_aot is None:
             in_aot = aot
         second_aot = copy.deepcopy(in_aot)
         second_layout = second_aot.children[0].children[self.component_idx].children[0]
+
         if self.attr == "Number":
             second_layout.number.set_value_level(second_layout.number.get_value_level() + self.value)
             second_layout.position.sample(second_layout.number.get_value())
             pos = second_layout.position.get_value()
+
             del second_layout.children[:]
             for i in range(len(pos)):
                 entity = copy.deepcopy(current_layout.children[0])
@@ -102,6 +107,7 @@ class Progression(Rule):
                 if not current_layout.uniformity.get_value():
                     entity.resample()
                 second_layout.insert(entity)
+
         elif self.attr == "Position":
             second_pos_idx = (second_layout.position.get_value_idx() + self.value) % len(second_layout.position.values)
             second_layout.position.set_value_idx(second_pos_idx)

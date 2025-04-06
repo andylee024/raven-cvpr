@@ -43,7 +43,7 @@ def fuse(args, all_configs):
         else:
             set_name = "test"
         
-        tree_name = random.choice(all_configs.keys())
+        tree_name = random.choice(list(all_configs.keys()))
         root = all_configs[tree_name]
         while True:
             rule_groups = sample_rules()
@@ -152,6 +152,8 @@ def fuse(args, all_configs):
                                                                           meta_structure=meta_structure)
         with open("{}/RAVEN_{}_{}.xml".format(args.save_dir, k, set_name), "w") as f:
             dom = dom_problem(context + candidates, rule_groups)
+            # TODO : remove hack
+            dom = str(dom)
             f.write(dom)
         if target == predicted:
             acc += 1
