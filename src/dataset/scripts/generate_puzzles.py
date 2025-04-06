@@ -9,7 +9,6 @@ implementations, saving them as separate images for visual comparison.
 """
 
 import os
-import sys
 import argparse
 import copy
 import random
@@ -19,7 +18,7 @@ from matplotlib.gridspec import GridSpec
 
 
 # Import from existing codebase
-from dataset.Rule import Rule_Wrapper
+from dataset.legacy.Rule import Rule_Wrapper
 from dataset.build_tree import build_distribute_four
 from dataset.rendering import render_panel
 
@@ -40,7 +39,7 @@ def parse_args():
                       help="Progression value (positive or negative)")
     
     # Output options
-    parser.add_argument("--output-dir", type=str, default="output_puzzles",
+    parser.add_argument("--output-dir", type=str, default="/Users/andylee/Projects/raven-cvpr/output_puzzles",
                       help="Output directory for the visualizations")
     
     parser.add_argument("--seed", type=int, default=None,

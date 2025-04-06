@@ -1,5 +1,5 @@
 import copy
-from .base import Rule
+from dataset.core.rules.base import Rule
 
 class ProgressionRule(Rule):
     """Rule that creates a progression on an attribute.
