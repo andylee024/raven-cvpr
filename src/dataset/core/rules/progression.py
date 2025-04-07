@@ -52,6 +52,9 @@ class ProgressionRule(Rule):
         
         return target_panel
     
+    def apply_rule(self, source_panel, target_panel=None):
+        return self.apply(source_panel, target_panel)
+    
     def _apply_to_number(self, source_layout, target_layout):
         """Apply progression to the Number attribute.
         
