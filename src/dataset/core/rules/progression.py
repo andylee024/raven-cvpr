@@ -18,7 +18,6 @@ class ProgressionRule(Rule):
         """
         super().__init__(attr, value, component_idx)
         self.state["first_col"] = True  # Flag for tracking first application
-        self.name = "Progression" # Maintains backwards compatibility
     
     def apply(self, source_panel, target_panel=None):
         """Apply progression to generate the next panel.
@@ -119,3 +118,28 @@ class ProgressionRule(Rule):
         # Update the attribute for all entities in the target
         for entity in target_layout.children:
             getattr(entity, attr_name).set_value_level(old_value_level + self.value)
+
+    def _get_layout(self, panel):
+        """Extract the layout node from a panel for the specified component.
+        
+        Args:
+            panel: A panel (Root node) to extract layout from
+            
+        Returns:
+            The layout node for the component this rule applies to
+        """
+        return panel.children[0].children[self.component_idx].children[0]
+
+    def _copy_if_none(self, source, target=None):
+        """Create a copy of the source if target is None.
+        
+        Args:
+            source: The source object
+            target: The optional target object
+            
+        Returns:
+            Target if not None, otherwise a copy of source
+        """
+        if target is None:
+            return copy.deepcopy(source)
+        return target

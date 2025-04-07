@@ -14,7 +14,6 @@ class AoTSampler:
         Returns:
             New sampled root node
         """
-        print("Running new sampler (root)")
         if root.is_pg:
             raise ValueError("Could not sample on a PG")
         
@@ -33,7 +32,6 @@ class AoTSampler:
         Returns:
             New sampled structure node
         """
-        print("Running new sampler (structure)")
         if structure.is_pg:
             raise ValueError("Could not sample on a PG")
             
@@ -52,7 +50,6 @@ class AoTSampler:
         Returns:
             New sampled component node
         """
-        print("Running new sampler (component)")
         if component.is_pg:
             raise ValueError("Could not sample on a PG")
             

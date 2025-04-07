@@ -2,13 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-Generate multiple RAVEN puzzles with progression rules.
+Generate multiple RAVEN puzzles with different rules and configurations.
 
-This script generates a specified number of puzzles using progression rules,
+This script generates puzzles for all configurations and rule types,
 saving them as PNG images.
-
-TODO: 
-- The loop is getting stuck after 1st iteration, i don't know why though.
 """
 
 import os
@@ -21,10 +18,13 @@ from matplotlib.gridspec import GridSpec
 
 # Import from existing codebase
 from dataset.core.rules.progression import ProgressionRule
+from dataset.core.rules.constant import ConstantRule
+from dataset.core.rules.arithmetic import ArithmeticRule
+from dataset.core.rules.distribute_three import DistributeThreeRule
 from dataset.build_tree import (build_distribute_four, build_distribute_nine, 
                               build_center_single, build_left_center_single_right_center_single,
                               build_up_center_single_down_center_single)
-from dataset.legacy.Rule import Rule_Wrapper
+
 from dataset.rendering import render_panel
 
 def parse_args():
@@ -32,20 +32,21 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Generate multiple RAVEN puzzles")
     
     # Rule options
-    parser.add_argument("--count", type=int, default=10,
-                      help="Number of puzzles to generate")
+    parser.add_argument("--puzzles-per-config", type=int, default=3,
+                      help="Number of puzzles to generate per configuration")
     
     # Output options
-    parser.add_argument("--output-dir", type=str, default="output_puzzles",
-                      help="Output directory for the visualizations")
+    parser.add_argument("--output-dir", type=str, 
+                      help="Output directory for the visualizations", 
+                      default="/Users/andylee/Projects/raven-cvpr/output_puzzles")
     
     parser.add_argument("--seed", type=int, default=None,
                       help="Random seed for reproducibility")
     
     return parser.parse_args()
 
-def get_random_root():
-    """Get a random puzzle configuration."""
+def get_all_configurations():
+    """Get all available puzzle configurations."""
     configs = {
         "center_single": build_center_single,
         "distribute_four": build_distribute_four,
@@ -53,65 +54,77 @@ def get_random_root():
         "left_right": build_left_center_single_right_center_single,
         "up_down": build_up_center_single_down_center_single
     }
-    
-    config_name = random.choice(list(configs.keys()))
-    root = configs[config_name]()
-    return config_name, root
+    return configs
 
-def get_random_rule_group():
-    """Get a random rule configuration."""
+def get_random_rule(rule_type=None):
+    """Get a random rule of the specified type."""
     attributes = ["Number", "Position", "Type", "Size", "Color"]
     attribute = random.choice(attributes)
-    increment_value = random.choice([-2, -1, 1, 2])
+    
+    if rule_type is None:
+        rule_type = random.choice(["Progression", "Constant", "Arithmetic", "DistributeThree"])
+    
+    if rule_type == "Progression":
+        increment_value = random.choice([-2, -1, 1, 2])
+        return ProgressionRule(attr=attribute, value=increment_value)
 
-    # TODO : add the ability to sample multiple rules
-    left_rule = ProgressionRule(attr=attribute, value=increment_value)
-    right_rule = ProgressionRule(attr=attribute, value=increment_value)
+    elif rule_type == "Constant":
+        return ConstantRule(attr=attribute)
 
-    # the number of rules dictates the configuration
-    return [[left_rule]] # TODO : add the ability to sample multiple rules
-    # return [[left_rule], [right_rule]]
+    elif rule_type == "Arithmetic":
+        value = random.choice([-1, 1])
+        return ArithmeticRule(attr=attribute, value=value)
 
-def get_random_puzzle_root():
-    """Build a valid root for a puzzle configuration and rule groups."""
-    _, root = get_random_root()
-    rule_group = get_random_rule_group()
+    elif rule_type == "DistributeThree":
+        return DistributeThreeRule(attr=attribute)
 
-    new_root = root.prune(rule_group)
-    if new_root is None:
-        print("Pruning failed! The rule is not compatible with this configuration.")
-        return None
+    else:
+        raise ValueError(f"Unknown rule type: {rule_type}")
 
-    start_node = new_root.sample()
-    return start_node, rule_group
-
-
-def generate_puzzle():
-    """Generate a puzzle with a progression rule.
+def sample_rule_group(rule_type=None):
+    """Sample a rule group of a specific type.
     
     Args:
-        root: The base AoT configuration
-        attr: Optional attribute for progression
-        value: Optional progression value
+        rule_type: Type of rule to sample (None for random)
         
     Returns:
-        tuple: (context, answer, attr, value, secondary_attr)
+        A list of rule groups
     """
-    # randomly sample configuration
-    _, root = get_random_root()
+    # For simplicity, we'll use a single rule
+    left_rule = get_random_rule(rule_type)
+    
+    # For more complex puzzles, you can uncomment this to use multiple rules
+    # right_rule = get_random_rule(rule_type)
+    # return [[left_rule], [right_rule]]
+    
+    return [[left_rule]]
 
-    # randomly sample rule
-    rule_group = get_random_rule_group()
+def generate_puzzle(config_name, config_builder, rule_type=None):
+    """Generate a puzzle with the specified configuration and rule type.
+    
+    Args:
+        config_name: Name of the configuration to use
+        config_builder: Function to build the configuration
+        rule_type: Type of rule to use (None for random)
+        
+    Returns:
+        Dictionary with puzzle information or None if generation failed
+    """
+    # Build the configuration
+    root = config_builder()
+    
+    # Sample a rule group
+    rule_group = sample_rule_group(rule_type)
     first_rule = rule_group[0][0]
 
-    # generate valid tree w/ pruning
+    # Generate valid tree w/ pruning
     new_root = root.prune(rule_group)
 
-    # pruning is failing! 
+    # If pruning fails, return None
     if new_root is None:
         return None
 
-    # sample the tree to create the first panel
+    # Sample the tree to create the first panel
     start_node = new_root.sample()
     
     # Generate the first row
@@ -133,19 +146,23 @@ def generate_puzzle():
     
     # Create context (all panels except the answer)
     context = [row_1_1, row_1_2, row_1_3, row_2_1, row_2_2, row_2_3, row_3_1, row_3_2]
-    return {'context': context, 
-            'answer': row_3_3, 
-            'attr': first_rule.attr, 
-            'value': first_rule.value} 
+    return {
+        'context': context, 
+        'answer': row_3_3, 
+        'attr': first_rule.attr, 
+        'value': getattr(first_rule, 'value', None),
+        'config': config_name,
+        'rule_type': first_rule.name
+    }
 
 def visualize_puzzle(context, answer, output_file, title):
     """Visualize a puzzle and save as PNG.
     
     Args:
-        context (list): Context panels
-        answer (object): Answer panel
-        output_file (str): Output filename
-        title (str): Title for the visualization
+        context: Context panels
+        answer: Answer panel
+        output_file: Output filename
+        title: Title for the visualization
     """
     # Create a figure with a 3x3 grid
     fig = plt.figure(figsize=(10, 10))
@@ -191,7 +208,6 @@ def visualize_puzzle(context, answer, output_file, title):
     plt.savefig(output_file, dpi=150, bbox_inches='tight')
     plt.close()
 
-
 def main():
     """Main function."""
     args = parse_args()
@@ -205,36 +221,73 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     
-    # Generate multiple puzzles
-    for i in range(args.count):
-
-        # Generate the puzzle 
-        puzzle_return = generate_puzzle()
-
-        # If puzzle generation fails, try again w/ new combo
-        if puzzle_return is None:
-            print(f"Generated puzzle {i+1}/{args.count} : pruning failed")
-            continue
-        
-        # Extract the puzzle components
-        context = puzzle_return['context']
-        answer = puzzle_return['answer']
-        attr = puzzle_return['attr']
-        value = puzzle_return['value']
-        
-        # Create a title for the puzzle
-        title = f"Puzzle {i+1}: \n{attr} Progression {value:+d}"
-        
-        # Create an output filename
-        output_file = os.path.join(args.output_dir, f"puzzle_{i+1}_{attr}_{value:+d}.png")
-        
-        # Visualize and save the puzzle
-        visualize_puzzle(context, answer, output_file, title)
-        
-        print(f"Generated puzzle {i+1}/{args.count} : with {attr} progression {value:+d}")
+    # Get all configurations
+    configs = get_all_configurations()
     
-    print(f"All {args.count} puzzles have been generated in {args.output_dir}")
-
+    # Get all rule types
+    rule_types = ["Progression", "Constant", "Arithmetic", "DistributeThree"]
+    
+    # Track counts
+    total_generated = 0
+    total_failures = 0
+    
+    # Generate puzzles for each configuration
+    for config_name, config_builder in configs.items():
+        config_dir = os.path.join(args.output_dir, config_name)
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir)
+            
+        print(f"\nGenerating puzzles for configuration: {config_name}")
+        
+        # Try to generate puzzles for each rule type
+        for rule_type in rule_types:
+            rule_dir = os.path.join(config_dir, rule_type)
+            if not os.path.exists(rule_dir):
+                os.makedirs(rule_dir)
+                
+            print(f"  Rule type: {rule_type}")
+            
+            # Generate specified number of puzzles per rule type
+            success_count = 0
+            attempt_count = 0
+            
+            while success_count < args.puzzles_per_config and attempt_count < args.puzzles_per_config * 5:
+                attempt_count += 1
+                
+                # Generate the puzzle
+                puzzle_data = generate_puzzle(config_name, config_builder, rule_type)
+                
+                # If puzzle generation fails, try again
+                if puzzle_data is None:
+                    total_failures += 1
+                    continue
+                
+                # Extract the puzzle components
+                context = puzzle_data['context']
+                answer = puzzle_data['answer']
+                attr = puzzle_data['attr']
+                value = puzzle_data.get('value')
+                
+                # Create a title for the puzzle
+                if value is not None:
+                    title = f"{config_name}: {rule_type} Rule\nAttribute: {attr} Value: {'+' + str(value) if isinstance(value, int) and value > 0 else value}"
+                else:
+                    title = f"{config_name}: {rule_type} Rule\nAttribute: {attr}"
+                
+                # Create an output filename
+                output_file = os.path.join(rule_dir, f"puzzle_{success_count+1}_{attr}.png")
+                
+                # Visualize and save the puzzle
+                visualize_puzzle(context, answer, output_file, title)
+                
+                success_count += 1
+                total_generated += 1
+                
+                print(f"Generated puzzle {success_count}/{args.puzzles_per_config}: {attr} (saved to {output_file})")
+    
+    print(f"\nCompleted generation: {total_generated} puzzles generated")
+    print(f"Failed attempts: {total_failures}")
+    print(f"All puzzles have been generated in {args.output_dir}")
 
 if __name__ == "__main__":
     main()
