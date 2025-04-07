@@ -9,6 +9,7 @@ from scipy.special import comb
 from dataset.Attribute import Angle, Color, Number, Position, Size, Type, Uniformity
 from dataset.constraints import rule_constraint
 from dataset.core.aot.operations.pruner import AoTPruner
+from dataset.core.aot.operations.sampler import AoTSampler
 
 
 class AoTNode(object):
@@ -66,29 +67,56 @@ class AoTNode(object):
     def __str__(self):
         return self.level + "." + self.name
 
+    def sample(self):
+        """Sample a concrete AoT from this abstract AoT.
+        
+        Returns:
+            A new concrete AoT
+        """
+        sampler = AoTSampler()
+        if self.level == "Root":
+            return sampler.sample_root(self)
+        elif self.level == "Structure":
+            return sampler.sample_structure(self)
+        elif self.level == "Component":
+            return sampler.sample_component(self)
+        elif self.level == "Layout":
+            return sampler.sample_layout(self)
+        else:
+            raise ValueError(f"Sampling not supported for {self.level} nodes")
+    
+    def resample(self, change_number=False):
+        """Resample this AoT in place.
+        
+        Args:
+            change_number: Whether to allow changing the number of entities
+            
+        Returns:
+            Self, after resampling
+        """
+        sampler = AoTSampler()
+        if not self.is_pg:
+            raise ValueError("Can only resample a PG (concrete node)")
+        
+        if self.level == "Root":
+            return sampler.resample_root(self, change_number)
+        elif self.level == "Structure":
+            sampler.resample_structure(self, change_number)
+        elif self.level == "Component":
+            sampler.resample_component(self, change_number)
+        elif self.level == "Layout":
+            sampler.resample_layout(self, change_number)
+        else:
+            raise ValueError(f"Resampling not supported for {self.level} nodes")
+        
+        return self
+
 
 class Root(AoTNode):
 
     def __init__(self, name, is_pg=False):
         super(Root, self).__init__(name, level="Root", node_type="or", is_pg=is_pg)
     
-    def sample(self):
-        """The function returns a separate AoT that is correctly parsed.
-        Note that a new node is needed so that modification does not alter settings
-        in the original tree.
-        Returns:
-            new_node(Root): a newly instantiated node
-        """
-        if self.is_pg:
-            raise ValueError("Could not sample on a PG")
-        new_node = Root(self.name, True)
-        selected = np.random.choice(self.children)
-        new_node.insert(selected._sample())
-        return new_node
-
-    def resample(self, change_number=False):
-        self._resample(change_number)
-
     def prune(self, rule_groups, new_implementation=True):
         """Prune the AoT such that all branches satisfy the constraints. 
         Arguments:
@@ -150,14 +178,6 @@ class Structure(AoTNode):
     def __init__(self, name, is_pg=False):
         super(Structure, self).__init__(name, level="Structure", node_type="and", is_pg=is_pg)
     
-    def _sample(self):
-        if self.is_pg:
-            raise ValueError("Could not sample on a PG")
-        new_node = Structure(self.name, True)
-        for child in self.children:
-            new_node.insert(child._sample())
-        return new_node
-    
     def _prune(self, rule_groups, new_implementation=True):
         if new_implementation:
             pruner = AoTPruner()
@@ -182,14 +202,6 @@ class Component(AoTNode):
 
     def __init__(self, name, is_pg=False):
         super(Component, self).__init__(name, level="Component", node_type="or", is_pg=is_pg)
-
-    def _sample(self):
-        if self.is_pg:
-            raise ValueError("Could not sample on a PG")
-        new_node = Component(self.name, True)
-        selected = np.random.choice(self.children)
-        new_node.insert(selected._sample())
-        return new_node
 
     def _prune(self, rule_group, new_implementation=True):
         if new_implementation:
@@ -261,61 +273,6 @@ class Layout(AoTNode):
                 new_entity.resample()
             self._insert(new_entity)
     
-    def resample(self, change_number=False):
-        self._resample(change_number)
-            
-    def _sample(self):
-        """Though Layout is an "and" node, we do not enumerate all possible configurations, but rather
-        we treat it as a sampling process such that different configurtions are sampled. After the
-        sampling, the lower level Entities are instantiated.
-        Returns:
-            new_node(Layout): a separated node with independent attributes
-        """
-        pos = self.position.get_value()
-        new_node = copy.deepcopy(self)
-        new_node.is_pg = True
-        if self.uniformity.get_value():
-            node = Entity(name=str(0), bbox=pos[0], entity_constraint=self.entity_constraint)
-            new_node._insert(node)
-            for i in range(1, len(pos)):
-                bbox = pos[i]
-                node = copy.deepcopy(node)
-                node.name = str(i)
-                node.bbox = bbox
-                new_node._insert(node)
-        else:
-            for i in range(len(pos)):
-                bbox = pos[i]
-                node = Entity(name=str(i), bbox=bbox, entity_constraint=self.entity_constraint)
-                new_node._insert(node)
-        return new_node
-        
-    def _resample(self, change_number):
-        """Resample each attribute for every child.
-        This function is called across rows.
-        Arguments:
-            change_number(bool): whether to resample a number
-        """
-        if change_number:
-            self.number.sample()
-        del self.children[:]
-        self.position.sample(self.number.get_value())
-        pos = self.position.get_value()
-        if self.uniformity.get_value():
-            node = Entity(name=str(0), bbox=pos[0], entity_constraint=self.entity_constraint)
-            self._insert(node)
-            for i in range(1, len(pos)):
-                bbox = pos[i]
-                node = copy.deepcopy(node)
-                node.name = str(i)
-                node.bbox = bbox
-                self._insert(node)
-        else:
-            for i in range(len(pos)):
-                bbox = pos[i]
-                node = Entity(name=str(i), bbox=bbox, entity_constraint=self.entity_constraint)
-                self._insert(node)
-
     def _update_constraint(self, rule_group):
         """Update the constraint of the layout. If one constraint is not satisfied, return None 
         such that this structure is disgarded.
@@ -453,6 +410,7 @@ class Entity(AoTNode):
         instance.max_level = max_level
 
     def resample(self):
+        """Resample entity attributes."""
         self.type.sample()
         self.size.sample()
         self.color.sample()
