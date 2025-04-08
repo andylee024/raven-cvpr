@@ -102,6 +102,11 @@ def visualize_puzzle(puzzle, output_file):
         plt.close('all')  # Make sure to close any open figures
         return False
 
+def ensure_directory(directory_path):
+    """Create directory if it doesn't exist."""
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
 def main():
     """Main function."""
     args = parse_args()
@@ -124,7 +129,7 @@ def main():
         "Progression",
         "Constant",
         "Arithmetic",
-        # "DistributeThree"  # Commented out as it seems problematic
+        # "DistributeThree"  # TODO: debug why this is not working
     ]
     
     # Create puzzle generator
@@ -135,24 +140,20 @@ def main():
     total_successes = 0
     failed_combos = []
     
-    # Generate and visualize puzzles
     for config_name in configs:
-        # Create config directory
+        # Setup directory for this configuration
         config_dir = os.path.join(args.output_dir, config_name)
-        if not os.path.exists(config_dir):
-            os.makedirs(config_dir)
+        ensure_directory(config_dir)
             
         print(f"\nGenerating puzzles for {config_name}:")
         
         # Generate for each rule type
         for rule_type in rule_types:
-            # Create rule directory
-            rule_dir = os.path.join(config_dir, rule_type)
-            if not os.path.exists(rule_dir):
-                os.makedirs(rule_dir)
-                
+            # Setup directory for this rule type
             print(f"  Rule type: {rule_type}")
-            
+            rule_dir = os.path.join(config_dir, rule_type)
+            ensure_directory(rule_dir)
+                
             # Generate specified number of puzzles
             success_count = 0
             attempt_count = 0
@@ -167,10 +168,8 @@ def main():
                     
                     if puzzle:
                         # Create output filename
-                        output_file = os.path.join(
-                            rule_dir, 
-                            f"puzzle_{success_count+1}_{puzzle['attr']}.png"
-                        )
+                        puzzle_name = f"puzzle_{success_count+1}_{puzzle['attr']}.png"
+                        output_file = os.path.join(rule_dir, puzzle_name)
                         
                         # Visualize and save
                         if visualize_puzzle(puzzle, output_file):
@@ -192,7 +191,6 @@ def main():
             # Check if we met the quota
             if success_count < args.puzzles_per_config:
                 failed_combos.append((config_name, rule_type, success_count))
-    
     # Print summary
     print("\n=== Generation Summary ===")
     print(f"Total attempts: {total_attempts}")
