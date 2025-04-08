@@ -1,5 +1,6 @@
 import random
 import copy
+import traceback
 
 from dataset.core.aot.builders import AoTBuilder
 from dataset.core.rules.factory import RuleFactory
@@ -116,6 +117,7 @@ class PuzzleGenerator:
                 'rule_type': rule_group[0][0].name
             }
         except Exception as e:
+            traceback.print_exc()  
             print(f"    Debug: Error generating panels: {e}")
             return None
     

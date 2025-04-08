@@ -36,6 +36,7 @@ def render_safe(node):
         return render_panel(node)
     except Exception as e:
         print(f"    Warning: Failed to render panel: {e}")
+        traceback.print_exc()
         # Return a blank image of appropriate size
         import numpy as np
         return np.ones((160, 160)) * 255  # White square as fallback
@@ -98,7 +99,7 @@ def visualize_puzzle(puzzle, output_file):
         return True
     except Exception as e:
         print(f"    Error visualizing puzzle: {e}")
-        traceback.print_exc(file=sys.stderr)
+        traceback.print_exc()
         plt.close('all')  # Make sure to close any open figures
         return False
 
@@ -138,6 +139,7 @@ def main():
     # Track statistics
     total_attempts = 0
     total_successes = 0
+    total_failures = 0
     failed_combos = []
     
     for config_name in configs:
@@ -156,10 +158,12 @@ def main():
                 
             # Generate specified number of puzzles
             success_count = 0
+            failure_count = 0
             attempt_count = 0
             
             while success_count < args.puzzles_per_config and attempt_count < args.max_attempts:
                 attempt_count += 1
+                render_success = True  # Track rendering success
                 
                 try:
                     # Generate puzzle
@@ -171,36 +175,55 @@ def main():
                         puzzle_name = f"puzzle_{success_count+1}_{puzzle['attr']}.png"
                         output_file = os.path.join(rule_dir, puzzle_name)
                         
-                        # Visualize and save
-                        if visualize_puzzle(puzzle, output_file):
+                        # Check for blank panels that indicate rendering failures
+                        for panel in puzzle['context'] + [puzzle['answer']]:
+                            try:
+                                # Just try to render, if it fails, mark as render failure
+                                render_panel(panel)
+                            except Exception as e:
+                                render_success = False
+                                print(f"    Render check failed: {e}")
+                        
+                        # Visualize and save (this will use render_safe to avoid crashing)
+                        vis_result = visualize_puzzle(puzzle, output_file)
+                        
+                        # Only count as success if both visualization worked AND render check passed
+                        if vis_result and render_success:
                             success_count += 1
                             print(f"Generated puzzle {success_count}/{args.puzzles_per_config}: {puzzle['attr']}")
                         else:
-                            print("Visualization failed")
+                            failure_count += 1
+                            print("Visualization failed - rendering issues detected")
                     else:
+                        failure_count += 1
                         print("Generation failed")
                         
                 except Exception as e:
+                    failure_count += 1
                     print(f"Error: {e}")
-                    traceback.print_exc(file=sys.stderr)
+                    print("Full stack trace:")
+                    traceback.print_exc()
             
             # Update statistics
             total_attempts += attempt_count
             total_successes += success_count
+            total_failures += failure_count
             
-            # Check if we met the quota
+            # Record if we didn't meet the quota
             if success_count < args.puzzles_per_config:
-                failed_combos.append((config_name, rule_type, success_count))
+                failed_combos.append((config_name, rule_type, success_count, failure_count))
+    
     # Print summary
     print("\n=== Generation Summary ===")
     print(f"Total attempts: {total_attempts}")
     print(f"Total successful puzzles: {total_successes}")
-    print(f"Success rate: {total_successes/total_attempts:.1%}")
+    print(f"Total failed puzzles: {total_failures}")
+    print(f"Success rate: {total_successes/(total_successes + total_failures):.1%}")
     
     if failed_combos:
         print("\nFailed to generate requested number of puzzles for:")
-        for config, rule, count in failed_combos:
-            print(f"  - {config}/{rule}: Generated {count}/{args.puzzles_per_config}")
+        for config, rule, success, failure in failed_combos:
+            print(f"  - {config}/{rule}: Generated {success}/{args.puzzles_per_config} (Failures: {failure})")
     
     print("\nAll done! Puzzles saved to", args.output_dir)
 

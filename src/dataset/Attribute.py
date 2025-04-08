@@ -99,7 +99,7 @@ class Type(Attribute):
     def sample(self, min_level=TYPE_MIN, max_level=TYPE_MAX):
         min_level = max(self.min_level, min_level)
         max_level = min(self.max_level, max_level)
-        self.value_level = np.random.choice(range(min_level, max_level + 1))
+        self.value_level = np.random.choice(range(int(min_level), int(max_level) + 1))
 
     def sample_new(self, min_level=None, max_level=None, previous_values=None):
         if min_level is None or max_level is None:
