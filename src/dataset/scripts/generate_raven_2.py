@@ -102,7 +102,6 @@ def visualize_puzzle(puzzle, output_file):
         traceback.print_exc()
         plt.close('all')  # Make sure to close any open figures
         return False
-
 def ensure_directory(directory_path):
     """Create directory if it doesn't exist."""
     if not os.path.exists(directory_path):
@@ -163,7 +162,6 @@ def main():
             
             while success_count < args.puzzles_per_config and attempt_count < args.max_attempts:
                 attempt_count += 1
-                render_success = True  # Track rendering success
                 
                 try:
                     # Generate puzzle
