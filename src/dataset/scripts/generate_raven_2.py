@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument("--output-dir", type=str, default="/Users/andylee/Projects/raven-cvpr/output_puzzles/demo_puzzles",
                         help="Output directory for puzzle visualizations")
     
-    parser.add_argument("--puzzles-per-config", type=int, default=3,
+    parser.add_argument("--puzzles-per-config", type=int, default=5,
                         help="Number of puzzles to generate per configuration")
     
     parser.add_argument("--max-attempts", type=int, default=30,
@@ -87,8 +87,10 @@ def visualize_puzzle(puzzle, output_file):
         plt.close()
         return True
     except Exception as e:
-        print(f"    Error visualizing puzzle: {e}")
+        print(f"Error visualizing puzzle: {e}")
         traceback.print_exc()
+        print(f"Error rendering context panel {i}: {e}")
+        print(f"Rule attribute: {puzzle['attr']}, type: {puzzle['rule_type']}")
         plt.close('all')  # Make sure to close any open figures
         return False
     
@@ -108,21 +110,21 @@ def main():
     
     # Configurations to process
     configs = [
-        "center_single",
-        "distribute_four",
+        # "center_single",
+        # "distribute_four",
         "distribute_nine",
-        "left_right",
-        "up_down",
-        "in_out_center_single",
-        "in_out_distribute_four"
+        # "left_right",
+        # "up_down",
+        # "in_out_center_single",
+        # "in_out_distribute_four"
     ]
     
     # Rule types to generate
     rule_types = [
-        "Progression",
-        "Constant",
-        "Arithmetic",
-        # "DistributeThree"  # TODO: debug why this is not working
+        # "Progression",
+        # "Constant",
+        # "Arithmetic",
+        "DistributeThree"  # TODO: debug why this is not working
     ]
     
     # Create puzzle generator
