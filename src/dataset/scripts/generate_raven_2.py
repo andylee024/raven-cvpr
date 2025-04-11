@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import traceback
 import sys
+import json
+from PIL import Image
 
 from dataset.core.puzzle_generator import PuzzleGenerator
 from dataset.rendering import render_panel
@@ -27,6 +29,9 @@ def parse_args():
     
     parser.add_argument("--max-attempts", type=int, default=30,
                         help="Maximum attempts per configuration/rule combination")
+    
+    parser.add_argument("--highlight-solution", action="store_true",
+                        help="Highlight the correct solution with a red border")
     
     return parser.parse_args()
 
@@ -171,12 +176,14 @@ def ensure_directory(directory_path):
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
 
-def visualize_and_save_puzzle(puzzle, output_base):
-    """Visualize a puzzle and save context and choices as separate PNG files.
+def visualize_and_save_puzzle(puzzle, output_base, highlight_solution=False):
+    """Visualize a puzzle and save context and choices as separate PNG files,
+    then combine them into a single image.
     
     Args:
         puzzle: Dictionary containing puzzle data
         output_base: Base filename without extension
+        highlight_solution: Whether to highlight the correct answer with a red border
         
     Returns:
         bool: True if visualization and saving succeeded
@@ -188,14 +195,31 @@ def visualize_and_save_puzzle(puzzle, output_base):
         
         # Save candidate choices
         choices_file = f"{output_base}_choices.png"
-        choices_success = save_candidate_choices(puzzle['candidates'], puzzle['target'], choices_file)
+        choices_success = save_candidate_choices(puzzle['candidates'], puzzle['target'], choices_file, highlight_solution)
+        
+        # Combine context and choices into a single image
+        combined_file = f"{output_base}_combined.png"
+        combined_success = False
+        if context_success and choices_success:
+            combined_success = combine_images(context_file, choices_file, combined_file)
+        
+        # Save metadata in JSON format
+        json_file = f"{output_base}.json"
+        if combined_success:
+            metadata_success = save_puzzle_metadata(puzzle, json_file, combined_file)
         
         # Also save the complete puzzle (optional)
         complete_file = f"{output_base}.png"
-        complete_success = save_complete_puzzle(puzzle, complete_file)
+        complete_success = save_complete_puzzle(puzzle, complete_file, highlight_solution)
         
-        # Return success only if both files were saved successfully
-        return context_success and choices_success
+        # Return success only if all files were saved successfully
+        success = context_success and choices_success and combined_success
+        
+        if success:
+            print(f"    - Combined image saved to: {combined_file}")
+            print(f"    - Metadata saved to: {json_file}")
+            
+        return success
         
     except Exception as e:
         print(f"Error visualizing puzzle: {e}")
@@ -221,7 +245,7 @@ def save_context_grid(context, output_file):
         plt.close('all')
         return False
 
-def save_candidate_choices(candidates, target_idx, output_file):
+def save_candidate_choices(candidates, target_idx, output_file, highlight_solution=False):
     """Save the candidate choices as a separate file."""
     try:
         # Create a figure with white background
@@ -229,7 +253,7 @@ def save_candidate_choices(candidates, target_idx, output_file):
         fig = plt.figure(figsize=(10, 5), facecolor='white')
         
         # Use a modified version of render_candidate_choices with better spacing
-        render_candidate_choices_separated(fig, candidates, target_idx)
+        render_candidate_choices_separated(fig, candidates, target_idx, highlight_solution)
         
         # Save the figure
         plt.savefig(output_file, dpi=150, bbox_inches='tight', pad_inches=0.1)
@@ -241,13 +265,14 @@ def save_candidate_choices(candidates, target_idx, output_file):
         plt.close('all')
         return False
 
-def render_candidate_choices_separated(fig, candidates, target_idx):
+def render_candidate_choices_separated(fig, candidates, target_idx, highlight_solution=False):
     """Render the candidate choices with labels, ensuring they don't overlap.
     
     Args:
         fig: Matplotlib figure to draw on
         candidates: List of 8 candidate panels
         target_idx: Index of the correct answer
+        highlight_solution: Whether to highlight the correct answer with a red border
     """
     # Letter labels for answers
     labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
@@ -275,9 +300,9 @@ def render_candidate_choices_separated(fig, candidates, target_idx):
         ax = fig.add_axes([left, bottom, panel_width, panel_height])
         ax.imshow(render_panel(candidates[i]), cmap='gray')
         
-        # Add border (red for correct answer)
-        border_color = 'red' if i == target_idx else 'black'
-        border_width = 2 if i == target_idx else 1
+        # Add border (red for correct answer if highlight_solution is True)
+        border_color = 'red' if (i == target_idx and highlight_solution) else 'black'
+        border_width = 2 if (i == target_idx and highlight_solution) else 1
         
         for spine in ax.spines.values():
             spine.set_visible(True)
@@ -301,9 +326,9 @@ def render_candidate_choices_separated(fig, candidates, target_idx):
         ax = fig.add_axes([left, bottom, panel_width, panel_height])
         ax.imshow(render_panel(candidates[i+4]), cmap='gray')
         
-        # Add border (red for correct answer)
-        border_color = 'red' if i+4 == target_idx else 'black'
-        border_width = 2 if i+4 == target_idx else 1
+        # Add border (red for correct answer if highlight_solution is True)
+        border_color = 'red' if (i+4 == target_idx and highlight_solution) else 'black'
+        border_width = 2 if (i+4 == target_idx and highlight_solution) else 1
         
         for spine in ax.spines.values():
             spine.set_visible(True)
@@ -317,7 +342,7 @@ def render_candidate_choices_separated(fig, candidates, target_idx):
         fig.text(left + panel_width/2, bottom - 0.05, labels[i+4], 
                 ha='center', va='center', fontsize=16)
 
-def save_complete_puzzle(puzzle, output_file):
+def save_complete_puzzle(puzzle, output_file, highlight_solution=False):
     """Save the complete puzzle as a single file."""
     try:
         context = puzzle['context']
@@ -336,7 +361,7 @@ def save_complete_puzzle(puzzle, output_file):
         render_context_grid(fig, context)
         
         # Draw candidate choices (positioned at the bottom with more space)
-        render_candidate_choices_separated(fig, candidates, target_idx)
+        render_candidate_choices_separated(fig, candidates, target_idx, highlight_solution)
         
         # Save figure
         plt.savefig(output_file, dpi=150, bbox_inches='tight', pad_inches=0.1)
@@ -346,6 +371,84 @@ def save_complete_puzzle(puzzle, output_file):
         print(f"Error saving complete puzzle: {e}")
         traceback.print_exc()
         plt.close('all')
+        return False
+
+def combine_images(context_file, choices_file, output_file):
+    """Combine context and choices images into a single PNG file.
+    
+    Args:
+        context_file: Path to the context image
+        choices_file: Path to the choices image
+        output_file: Path to save the combined image
+        
+    Returns:
+        bool: True if successful
+    """
+    try:
+        # Open the images
+        context_img = Image.open(context_file)
+        choices_img = Image.open(choices_file)
+        
+        # Get the dimensions
+        context_width, context_height = context_img.size
+        choices_width, choices_height = choices_img.size
+        
+        # Create a new image with enough height for both
+        # Use the wider of the two as the width
+        width = max(context_width, choices_width)
+        height = context_height + choices_height
+        
+        # Create new image with white background
+        combined_img = Image.new('RGB', (width, height), (255, 255, 255))
+        
+        # Paste the images
+        combined_img.paste(context_img, ((width - context_width) // 2, 0))
+        combined_img.paste(choices_img, ((width - choices_width) // 2, context_height))
+        
+        # Save the combined image
+        combined_img.save(output_file, 'PNG')
+        return True
+        
+    except Exception as e:
+        print(f"Error combining images: {e}")
+        traceback.print_exc()
+        return False
+
+def save_puzzle_metadata(puzzle, output_path, combined_image_path):
+    """Save puzzle metadata as JSON.
+    
+    Args:
+        puzzle: The puzzle dictionary
+        output_path: Path to save the JSON metadata
+        combined_image_path: Path to the combined image
+        
+    Returns:
+        bool: True if successful
+    """
+    try:
+        # Get the answer letter (A-H)
+        answer_idx = puzzle['target']
+        answer_letter = chr(65 + answer_idx)  # Convert 0-7 to A-H
+        
+        # Create metadata dictionary
+        metadata = {
+            "image_path": combined_image_path,
+            "answer": answer_letter,
+            "rule_type": puzzle['rule_type'],
+            "attribute": puzzle['attr'],
+            "value": puzzle['value'],
+            "config": puzzle['config']
+        }
+        
+        # Save as JSON
+        with open(output_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+            
+        return True
+        
+    except Exception as e:
+        print(f"Error saving metadata: {e}")
+        traceback.print_exc()
         return False
 
 def main():
@@ -417,12 +520,15 @@ def main():
                         output_base = os.path.join(rule_dir, base_filename)
                         
                         # Visualize and save the puzzle components
-                        vis_result = visualize_and_save_puzzle(puzzle, output_base)
+                        vis_result = visualize_and_save_puzzle(puzzle, output_base, args.highlight_solution)
                         
                         # Only count as success if visualization worked
                         if vis_result:
                             success_count += 1
-                            print(f"Generated puzzle {success_count}/{args.puzzles_per_config}: {puzzle['attr']}")
+                            # Show whether solution is highlighted
+                            solution_state = "highlighted" if args.highlight_solution else "not highlighted"
+                            print(f"Generated puzzle {success_count}/{args.puzzles_per_config}: "
+                                  f"{puzzle['attr']} (Solution: {solution_state})")
                             print(f"    - Saved to: {output_base}_context.png and {output_base}_choices.png")
                         else:
                             failure_count += 1
