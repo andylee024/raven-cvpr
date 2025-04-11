@@ -30,17 +30,6 @@ def parse_args():
     
     return parser.parse_args()
 
-def render_safe(node):
-    """Safely render a panel, returning a blank image on failure."""
-    try:
-        return render_panel(node)
-    except Exception as e:
-        print(f"    Warning: Failed to render panel: {e}")
-        traceback.print_exc()
-        # Return a blank image of appropriate size
-        import numpy as np
-        return np.ones((160, 160)) * 255  # White square as fallback
-
 def visualize_puzzle(puzzle, output_file):
     """Visualize a puzzle and save as PNG."""
     try:
@@ -67,7 +56,7 @@ def visualize_puzzle(puzzle, output_file):
             row = (i // 3) + 1
             col = i % 3
             ax = fig.add_subplot(gs[row, col])
-            ax.imshow(render_safe(panel), cmap='gray')
+            ax.imshow(render_panel(panel), cmap='gray')
             
             # Add border
             for spine in ax.spines.values():
@@ -81,7 +70,7 @@ def visualize_puzzle(puzzle, output_file):
         
         # Render answer panel
         ax = fig.add_subplot(gs[3, 2])
-        ax.imshow(render_safe(answer), cmap='gray')
+        ax.imshow(render_panel(answer), cmap='gray')
         
         # Add red border
         for spine in ax.spines.values():
@@ -102,6 +91,8 @@ def visualize_puzzle(puzzle, output_file):
         traceback.print_exc()
         plt.close('all')  # Make sure to close any open figures
         return False
+    
+
 def ensure_directory(directory_path):
     """Create directory if it doesn't exist."""
     if not os.path.exists(directory_path):
@@ -121,7 +112,9 @@ def main():
         "distribute_four",
         "distribute_nine",
         "left_right",
-        "up_down"
+        "up_down",
+        "in_out_center_single",
+        "in_out_distribute_four"
     ]
     
     # Rule types to generate
@@ -173,20 +166,11 @@ def main():
                         puzzle_name = f"puzzle_{success_count+1}_{puzzle['attr']}.png"
                         output_file = os.path.join(rule_dir, puzzle_name)
                         
-                        # Check for blank panels that indicate rendering failures
-                        for panel in puzzle['context'] + [puzzle['answer']]:
-                            try:
-                                # Just try to render, if it fails, mark as render failure
-                                render_panel(panel)
-                            except Exception as e:
-                                render_success = False
-                                print(f"    Render check failed: {e}")
-                        
-                        # Visualize and save (this will use render_safe to avoid crashing)
+                        # Visualize and save
                         vis_result = visualize_puzzle(puzzle, output_file)
                         
-                        # Only count as success if both visualization worked AND render check passed
-                        if vis_result and render_success:
+                        # Only count as success if both visualization worked
+                        if vis_result:
                             success_count += 1
                             print(f"Generated puzzle {success_count}/{args.puzzles_per_config}: {puzzle['attr']}")
                         else:
