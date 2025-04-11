@@ -37,77 +37,18 @@ def visualize_puzzle(puzzle, output_file):
         candidates = puzzle['candidates']
         target_idx = puzzle['target']
         
-        # Create a title based on puzzle data
-        title = f"{puzzle['config']}: {puzzle['rule_type']} Rule\n"
-        title += f"Attribute: {puzzle['attr']}"
-        if puzzle['value'] is not None:
-            title += f" Value: {'+' + str(puzzle['value']) if isinstance(puzzle['value'], int) and puzzle['value'] > 0 else puzzle['value']}"
+        # Create figure with white background
+        fig = plt.figure(figsize=(10, 12), facecolor='white')
+        plt.subplots_adjust(left=0.1, right=0.9, top=0.95, bottom=0.05, wspace=0.1, hspace=0.2)
         
-        # Create a figure with two subplots vertically stacked
-        fig = plt.figure(figsize=(20, 20))
+        # Draw the 3x3 context grid
+        render_context_grid(fig, context)
         
-        # Use GridSpec for more control over layout
-        # 7 rows: title, 3 context rows, spacing, candidates label, 2 rows of candidates (4 each)
-        gs = GridSpec(8, 4, height_ratios=[0.5, 3, 3, 3, 0.5, 0.5, 2, 2])
+        # Draw the candidate choices
+        render_candidate_choices(fig, candidates, target_idx)
         
-        # Add the title
-        title_ax = fig.add_subplot(gs[0, :])
-        title_ax.text(0.5, 0.5, title, ha='center', va='center', fontsize=12)
-        title_ax.axis('off')
-        
-        # Render context panels (3x3 grid)
-        for i, panel in enumerate(context):
-            row = (i // 3) + 1
-            col = i % 3
-            ax = fig.add_subplot(gs[row, col])
-            ax.imshow(render_panel(panel), cmap='gray')
-            
-            # Add border
-            for spine in ax.spines.values():
-                spine.set_visible(True)
-                spine.set_color('black')
-                spine.set_linewidth(2)
-                
-            ax.axis('on')
-            ax.set_xticks([])
-            ax.set_yticks([])
-        
-        # Add question mark for missing panel
-        ax = fig.add_subplot(gs[3, 2])
-        ax.text(0.5, 0.5, '?', ha='center', va='center', fontsize=50)
-        ax.axis('on')
-        ax.set_xticks([])
-        ax.set_yticks([])
-        
-        # Add "Candidate Answers:" text
-        candidates_title = fig.add_subplot(gs[5, :])
-        candidates_title.text(0.5, 0.5, "Candidate Answers:", ha='center', va='center', fontsize=12)
-        candidates_title.axis('off')
-        
-        # Render candidate panels in two rows (4 candidates each)
-        for i, candidate in enumerate(candidates):
-            row = 6 + (i // 4)  # Put first 4 candidates in row 6, next 4 in row 7
-            col = i % 4         # Spread 4 candidates across columns
-            ax = fig.add_subplot(gs[row, col])
-            ax.imshow(render_panel(candidate), cmap='gray')
-            
-            # Add border (red for correct answer)
-            border_color = 'red' if i == target_idx else 'black'
-            border_width = 3 if i == target_idx else 1
-            
-            for spine in ax.spines.values():
-                spine.set_visible(True)
-                spine.set_color(border_color)
-                spine.set_linewidth(border_width)
-                
-            ax.axis('on')
-            ax.set_xticks([])
-            ax.set_yticks([])
-            ax.set_title(f'Choice {i+1}{"  ✓" if i == target_idx else ""}', pad=8)
-        
-        # Adjust layout and save
-        plt.tight_layout()
-        plt.savefig(output_file, dpi=150, bbox_inches='tight')
+        # Save figure without additional padding
+        plt.savefig(output_file, dpi=150, bbox_inches='tight', pad_inches=0.1)
         plt.close()
         return True
         
@@ -117,10 +58,295 @@ def visualize_puzzle(puzzle, output_file):
         plt.close('all')
         return False
 
+def render_context_grid(fig, context):
+    """Render the 3x3 context grid of the puzzle.
+    
+    Args:
+        fig: Matplotlib figure to draw on
+        context: List of 8 context panels
+    """
+    # Main 3x3 grid for context panels
+    for i, panel in enumerate(context):
+        row = i // 3
+        col = i % 3
+        
+        # Calculate position (in figure coordinates)
+        left = 0.15 + col * 0.25
+        bottom = 0.65 - row * 0.2
+        width = 0.2
+        height = 0.19
+        
+        # Create axis
+        ax = fig.add_axes([left, bottom, width, height])
+        ax.imshow(render_panel(panel), cmap='gray')
+        
+        # Add border
+        for spine in ax.spines.values():
+            spine.set_visible(True)
+            spine.set_color('black')
+            spine.set_linewidth(1)
+            
+        ax.set_xticks([])
+        ax.set_yticks([])
+    
+    # Add question mark for missing panel
+    ax = fig.add_axes([0.65, 0.25, 0.2, 0.19])
+    ax.text(0.5, 0.5, '?', ha='center', va='center', fontsize=50)
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_color('black')
+        spine.set_linewidth(1)
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+def render_candidate_choices(fig, candidates, target_idx):
+    """Render the candidate choices with labels.
+    
+    Args:
+        fig: Matplotlib figure to draw on
+        candidates: List of 8 candidate panels
+        target_idx: Index of the correct answer
+    """
+    # Letter labels for answers
+    labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    
+    # First row of candidates (A-D)
+    for i in range(4):
+        # Calculate position
+        left = 0.15 + i * 0.2
+        bottom = 0.175
+        width = 0.17
+        height = 0.17
+        
+        # Create axis
+        ax = fig.add_axes([left, bottom, width, height])
+        ax.imshow(render_panel(candidates[i]), cmap='gray')
+        
+        # Add border (red for correct answer)
+        border_color = 'red' if i == target_idx else 'black'
+        border_width = 2 if i == target_idx else 1
+        
+        for spine in ax.spines.values():
+            spine.set_visible(True)
+            spine.set_color(border_color)
+            spine.set_linewidth(border_width)
+            
+        ax.set_xticks([])
+        ax.set_yticks([])
+        
+        # Add letter label below
+        fig.text(left + width/2, bottom - 0.03, labels[i], 
+                ha='center', va='center', fontsize=16)
+    
+    # Second row of candidates (E-H)
+    for i in range(4):
+        # Calculate position
+        left = 0.15 + i * 0.2
+        bottom = 0.05
+        width = 0.17
+        height = 0.17
+        
+        # Create axis
+        ax = fig.add_axes([left, bottom, width, height])
+        ax.imshow(render_panel(candidates[i+4]), cmap='gray')
+        
+        # Add border (red for correct answer)
+        border_color = 'red' if i+4 == target_idx else 'black'
+        border_width = 2 if i+4 == target_idx else 1
+        
+        for spine in ax.spines.values():
+            spine.set_visible(True)
+            spine.set_color(border_color)
+            spine.set_linewidth(border_width)
+            
+        ax.set_xticks([])
+        ax.set_yticks([])
+        
+        # Add letter label below
+        fig.text(left + width/2, bottom - 0.03, labels[i+4], 
+                ha='center', va='center', fontsize=16)
+
 def ensure_directory(directory_path):
     """Create directory if it doesn't exist."""
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
+
+def visualize_and_save_puzzle(puzzle, output_base):
+    """Visualize a puzzle and save context and choices as separate PNG files.
+    
+    Args:
+        puzzle: Dictionary containing puzzle data
+        output_base: Base filename without extension
+        
+    Returns:
+        bool: True if visualization and saving succeeded
+    """
+    try:
+        # Save context grid
+        context_file = f"{output_base}_context.png"
+        context_success = save_context_grid(puzzle['context'], context_file)
+        
+        # Save candidate choices
+        choices_file = f"{output_base}_choices.png"
+        choices_success = save_candidate_choices(puzzle['candidates'], puzzle['target'], choices_file)
+        
+        # Also save the complete puzzle (optional)
+        complete_file = f"{output_base}.png"
+        complete_success = save_complete_puzzle(puzzle, complete_file)
+        
+        # Return success only if both files were saved successfully
+        return context_success and choices_success
+        
+    except Exception as e:
+        print(f"Error visualizing puzzle: {e}")
+        traceback.print_exc()
+        return False
+
+def save_context_grid(context, output_file):
+    """Save the 3x3 context grid as a separate file."""
+    try:
+        # Create figure with white background
+        fig = plt.figure(figsize=(7.5, 7.5), facecolor='white')
+        
+        # Draw the context grid
+        render_context_grid(fig, context)
+        
+        # Save the figure
+        plt.savefig(output_file, dpi=150, bbox_inches='tight', pad_inches=0.1)
+        plt.close()
+        return True
+    except Exception as e:
+        print(f"Error saving context grid: {e}")
+        traceback.print_exc()
+        plt.close('all')
+        return False
+
+def save_candidate_choices(candidates, target_idx, output_file):
+    """Save the candidate choices as a separate file."""
+    try:
+        # Create a figure with white background
+        # Increase width and height to provide more space between panels
+        fig = plt.figure(figsize=(10, 5), facecolor='white')
+        
+        # Use a modified version of render_candidate_choices with better spacing
+        render_candidate_choices_separated(fig, candidates, target_idx)
+        
+        # Save the figure
+        plt.savefig(output_file, dpi=150, bbox_inches='tight', pad_inches=0.1)
+        plt.close()
+        return True
+    except Exception as e:
+        print(f"Error saving candidate choices: {e}")
+        traceback.print_exc()
+        plt.close('all')
+        return False
+
+def render_candidate_choices_separated(fig, candidates, target_idx):
+    """Render the candidate choices with labels, ensuring they don't overlap.
+    
+    Args:
+        fig: Matplotlib figure to draw on
+        candidates: List of 8 candidate panels
+        target_idx: Index of the correct answer
+    """
+    # Letter labels for answers
+    labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+    
+    # Set up grid layout that ensures panels don't overlap
+    # Use fixed positions with more spacing between panels
+    
+    # Calculate panel sizes and positions
+    panel_width = 0.15   # Reduced from 0.17
+    panel_height = 0.35  # Increased for better proportions
+    horiz_space = 0.02   # Space between columns
+    vert_space = 0.1     # Space between rows
+    
+    # Starting positions
+    top_row_bottom = 0.55
+    bottom_row_bottom = 0.1
+    
+    # First row of candidates (A-D)
+    for i in range(4):
+        # Calculate position with increased spacing
+        left = 0.1 + i * (panel_width + horiz_space)
+        bottom = top_row_bottom
+        
+        # Create axis
+        ax = fig.add_axes([left, bottom, panel_width, panel_height])
+        ax.imshow(render_panel(candidates[i]), cmap='gray')
+        
+        # Add border (red for correct answer)
+        border_color = 'red' if i == target_idx else 'black'
+        border_width = 2 if i == target_idx else 1
+        
+        for spine in ax.spines.values():
+            spine.set_visible(True)
+            spine.set_color(border_color)
+            spine.set_linewidth(border_width)
+            
+        ax.set_xticks([])
+        ax.set_yticks([])
+        
+        # Add letter label below
+        fig.text(left + panel_width/2, bottom - 0.05, labels[i], 
+                ha='center', va='center', fontsize=16)
+    
+    # Second row of candidates (E-H)
+    for i in range(4):
+        # Calculate position with increased spacing
+        left = 0.1 + i * (panel_width + horiz_space)
+        bottom = bottom_row_bottom
+        
+        # Create axis
+        ax = fig.add_axes([left, bottom, panel_width, panel_height])
+        ax.imshow(render_panel(candidates[i+4]), cmap='gray')
+        
+        # Add border (red for correct answer)
+        border_color = 'red' if i+4 == target_idx else 'black'
+        border_width = 2 if i+4 == target_idx else 1
+        
+        for spine in ax.spines.values():
+            spine.set_visible(True)
+            spine.set_color(border_color)
+            spine.set_linewidth(border_width)
+            
+        ax.set_xticks([])
+        ax.set_yticks([])
+        
+        # Add letter label below
+        fig.text(left + panel_width/2, bottom - 0.05, labels[i+4], 
+                ha='center', va='center', fontsize=16)
+
+def save_complete_puzzle(puzzle, output_file):
+    """Save the complete puzzle as a single file."""
+    try:
+        context = puzzle['context']
+        candidates = puzzle['candidates']
+        target_idx = puzzle['target']
+        
+        # Create a larger figure to accommodate the non-overlapping candidate layout
+        fig = plt.figure(figsize=(10, 15), facecolor='white')
+        
+        # Add more vertical space for context and separated candidates
+        plt.subplots_adjust(left=0.1, right=0.9, top=0.95, bottom=0.05, hspace=0.4)
+        
+        # Draw context grid (positioned at the top of the figure)
+        ax_context = fig.add_axes([0.05, 0.5, 0.9, 0.45])
+        ax_context.axis('off')
+        render_context_grid(fig, context)
+        
+        # Draw candidate choices (positioned at the bottom with more space)
+        render_candidate_choices_separated(fig, candidates, target_idx)
+        
+        # Save figure
+        plt.savefig(output_file, dpi=150, bbox_inches='tight', pad_inches=0.1)
+        plt.close()
+        return True
+    except Exception as e:
+        print(f"Error saving complete puzzle: {e}")
+        traceback.print_exc()
+        plt.close('all')
+        return False
 
 def main():
     """Main function."""
@@ -186,17 +412,18 @@ def main():
                     puzzle = generator.generate(config_name, rule_type)
                     
                     if puzzle:
-                        # Create output filename
-                        puzzle_name = f"puzzle_{success_count+1}_{puzzle['attr']}.png"
-                        output_file = os.path.join(rule_dir, puzzle_name)
+                        # Create base output filename without extension
+                        base_filename = f"puzzle_{success_count+1}_{puzzle['attr']}"
+                        output_base = os.path.join(rule_dir, base_filename)
                         
-                        # Visualize and save
-                        vis_result = visualize_puzzle(puzzle, output_file)
+                        # Visualize and save the puzzle components
+                        vis_result = visualize_and_save_puzzle(puzzle, output_base)
                         
-                        # Only count as success if both visualization worked
+                        # Only count as success if visualization worked
                         if vis_result:
                             success_count += 1
                             print(f"Generated puzzle {success_count}/{args.puzzles_per_config}: {puzzle['attr']}")
+                            print(f"    - Saved to: {output_base}_context.png and {output_base}_choices.png")
                         else:
                             failure_count += 1
                             print("Visualization failed - rendering issues detected")
