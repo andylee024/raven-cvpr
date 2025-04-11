@@ -70,6 +70,44 @@ class PuzzleGenerator:
         attribute = random.choice(["Number", "Position", "Type", "Size", "Color"])
         return self.rule_factory.create_rule(rule_type, attribute)
     
+    def _generate_candidates(self, answer_panel, rule_groups, num_candidates=7):
+        """Generate candidate answers including distractors.
+        
+        Args:
+            answer_panel: The correct answer panel
+            rule_groups: The rule groups used for the puzzle
+            num_candidates: Number of distractor candidates to generate
+            
+        Returns:
+            tuple: (candidates, target_idx) where candidates is list of panels and 
+                  target_idx is the index of correct answer
+        """
+        from dataset.sampling import sample_attr_avail, sample_attr
+        
+        # Get modifiable attributes for the answer panel
+        modifiable_attr = sample_attr_avail(rule_groups, answer_panel)
+        
+        # Create list of candidates starting with correct answer
+        answer_AoT = copy.deepcopy(answer_panel)
+        candidates = [answer_AoT]
+        
+        # Generate distractor candidates
+        for _ in range(num_candidates):
+            # Sample an attribute to modify
+            component_idx, attr_name, min_level, max_level = sample_attr(modifiable_attr)
+            
+            # Create a new candidate by modifying the sampled attribute
+            candidate = copy.deepcopy(answer_AoT)
+            candidate.sample_new(component_idx, attr_name, min_level, max_level, answer_AoT)
+            candidates.append(candidate)
+        
+        # Shuffle candidates and track correct answer
+        correct_answer = candidates[0]
+        random.shuffle(candidates)
+        target_idx = candidates.index(correct_answer)
+        
+        return candidates, target_idx
+    
     def _try_generate_puzzle(self, config_builder, rule_group, config_name):
         """Attempt to generate a puzzle with pruning and sampling."""
 
@@ -107,10 +145,15 @@ class PuzzleGenerator:
         try:
             panels = self._generate_panels(start_node, rule_group)
             
-            # Package the result (just report the first rule for simplicity)
+            # Generate candidate answers
+            candidates, target_idx = self._generate_candidates(answer_panel=panels[-1], rule_groups=rule_group)
+            
+            # Package the result with all information
             return {
                 'context': panels[:-1],  # First 8 panels
-                'answer': panels[-1],    # Last panel
+                'answer': panels[-1],    # Correct answer panel
+                'candidates': candidates, # All candidate answers (including correct one)
+                'target': target_idx,    # Index of correct answer in candidates
                 'attr': rule_group[0][0].attr,
                 'value': getattr(rule_group[0][0], 'value', None),
                 'config': config_name,

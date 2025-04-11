@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument("--output-dir", type=str, default="/Users/andylee/Projects/raven-cvpr/output_puzzles/demo_puzzles",
                         help="Output directory for puzzle visualizations")
     
-    parser.add_argument("--puzzles-per-config", type=int, default=5,
+    parser.add_argument("--puzzles-per-config", type=int, default=3,
                         help="Number of puzzles to generate per configuration")
     
     parser.add_argument("--max-attempts", type=int, default=30,
@@ -34,7 +34,8 @@ def visualize_puzzle(puzzle, output_file):
     """Visualize a puzzle and save as PNG."""
     try:
         context = puzzle['context']
-        answer = puzzle['answer']
+        candidates = puzzle['candidates']
+        target_idx = puzzle['target']
         
         # Create a title based on puzzle data
         title = f"{puzzle['config']}: {puzzle['rule_type']} Rule\n"
@@ -42,16 +43,19 @@ def visualize_puzzle(puzzle, output_file):
         if puzzle['value'] is not None:
             title += f" Value: {'+' + str(puzzle['value']) if isinstance(puzzle['value'], int) and puzzle['value'] > 0 else puzzle['value']}"
         
-        # Create a figure with a 3x3 grid
-        fig = plt.figure(figsize=(10, 10))
-        gs = GridSpec(4, 3, height_ratios=[1, 3, 3, 3])
+        # Create a figure with two subplots vertically stacked
+        fig = plt.figure(figsize=(20, 20))
+        
+        # Use GridSpec for more control over layout
+        # 7 rows: title, 3 context rows, spacing, candidates label, 2 rows of candidates (4 each)
+        gs = GridSpec(8, 4, height_ratios=[0.5, 3, 3, 3, 0.5, 0.5, 2, 2])
         
         # Add the title
         title_ax = fig.add_subplot(gs[0, :])
         title_ax.text(0.5, 0.5, title, ha='center', va='center', fontsize=12)
         title_ax.axis('off')
         
-        # Render context panels
+        # Render context panels (3x3 grid)
         for i, panel in enumerate(context):
             row = (i // 3) + 1
             col = i % 3
@@ -68,32 +72,50 @@ def visualize_puzzle(puzzle, output_file):
             ax.set_xticks([])
             ax.set_yticks([])
         
-        # Render answer panel
+        # Add question mark for missing panel
         ax = fig.add_subplot(gs[3, 2])
-        ax.imshow(render_panel(answer), cmap='gray')
-        
-        # Add red border
-        for spine in ax.spines.values():
-            spine.set_visible(True)
-            spine.set_color('red')
-            spine.set_linewidth(3)
-        
+        ax.text(0.5, 0.5, '?', ha='center', va='center', fontsize=50)
         ax.axis('on')
         ax.set_xticks([])
         ax.set_yticks([])
         
-        # Save figure
+        # Add "Candidate Answers:" text
+        candidates_title = fig.add_subplot(gs[5, :])
+        candidates_title.text(0.5, 0.5, "Candidate Answers:", ha='center', va='center', fontsize=12)
+        candidates_title.axis('off')
+        
+        # Render candidate panels in two rows (4 candidates each)
+        for i, candidate in enumerate(candidates):
+            row = 6 + (i // 4)  # Put first 4 candidates in row 6, next 4 in row 7
+            col = i % 4         # Spread 4 candidates across columns
+            ax = fig.add_subplot(gs[row, col])
+            ax.imshow(render_panel(candidate), cmap='gray')
+            
+            # Add border (red for correct answer)
+            border_color = 'red' if i == target_idx else 'black'
+            border_width = 3 if i == target_idx else 1
+            
+            for spine in ax.spines.values():
+                spine.set_visible(True)
+                spine.set_color(border_color)
+                spine.set_linewidth(border_width)
+                
+            ax.axis('on')
+            ax.set_xticks([])
+            ax.set_yticks([])
+            ax.set_title(f'Choice {i+1}{"  ✓" if i == target_idx else ""}', pad=8)
+        
+        # Adjust layout and save
+        plt.tight_layout()
         plt.savefig(output_file, dpi=150, bbox_inches='tight')
         plt.close()
         return True
+        
     except Exception as e:
         print(f"Error visualizing puzzle: {e}")
         traceback.print_exc()
-        print(f"Error rendering context panel {i}: {e}")
-        print(f"Rule attribute: {puzzle['attr']}, type: {puzzle['rule_type']}")
-        plt.close('all')  # Make sure to close any open figures
+        plt.close('all')
         return False
-    
 
 def ensure_directory(directory_path):
     """Create directory if it doesn't exist."""
@@ -121,10 +143,10 @@ def main():
     
     # Rule types to generate
     rule_types = [
-        # "Progression",
+        "Progression",
         # "Constant",
-        # "Arithmetic",
-        "DistributeThree"  # TODO: debug why this is not working
+        "Arithmetic",
+        "DistributeThree"  
     ]
     
     # Create puzzle generator
@@ -146,7 +168,7 @@ def main():
         # Generate for each rule type
         for rule_type in rule_types:
             # Setup directory for this rule type
-            print(f"  Rule type: {rule_type}")
+            print(f"Rule type: {rule_type}")
             rule_dir = os.path.join(config_dir, rule_type)
             ensure_directory(rule_dir)
                 
