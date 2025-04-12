@@ -6,8 +6,8 @@ import copy
 import numpy as np
 from scipy.special import comb
 
-from dataset.Attribute import Angle, Color, Number, Position, Size, Type, Uniformity
-from dataset.constraints import rule_constraint
+from dataset.legacy.Attribute import Angle, Color, Number, Position, Size, Type, Uniformity
+from dataset.legacy.constraints import rule_constraint
 from dataset.core.aot.operations.pruner import AoTPruner
 from dataset.core.aot.operations.sampler import AoTSampler
 

@@ -1,6 +1,7 @@
 import copy
-from dataset.AoT import Root, Structure, Component, Layout, Entity
-from dataset.Attribute import Angle
+from dataset.core.aot.entity_facade import EntityFacade
+from dataset.legacy.AoT import Root, Structure, Component, Layout, Entity
+from dataset.legacy.Attribute import Angle
 
 class AoTFacade:
     """Facade providing simplified access to AoT structure."""
@@ -9,26 +10,34 @@ class AoTFacade:
         """Initialize with AoT root node."""
         if not hasattr(aot_root, 'level') or aot_root.level != "Root":
             raise TypeError("Expected Root node, got something else")
+
         self.root = aot_root
     
-    # Entity access
     def get_entity(self, component_idx=0, entity_idx=0):
-        """Get entity at specified indices."""
+        """Get entity at specified indices (wrapped in EntityFacade)."""
         try:
-            component = self.root.children[0].children[component_idx]
-            layout = component.children[0]
-            return layout.children[entity_idx]
+            layout = self._get_layout(component_idx)
+            entity = layout.children[entity_idx]
+            return EntityFacade.wrap(entity)
+        
         except (IndexError, AttributeError):
             raise IndexError(f"Entity not found at component {component_idx}, entity {entity_idx}")
     
     def get_entities(self, component_idx=0):
-        """Get all entities in component."""
+        """Get all entities in component (wrapped in EntityFacade)."""
         try:
-            component = self.root.children[0].children[component_idx]
-            layout = component.children[0]
-            return layout.children
+            layout = self._get_layout(component_idx)
+            return [EntityFacade.wrap(entity) for entity in layout.children]
+
         except (IndexError, AttributeError):
             return []
+    
+    def get_total_entity_count(self):
+        """Get the total number of entities in the panel."""
+        total_entities = 0
+        for comp_idx in range(len(self._get_structure().children)):
+            total_entities += self.get_entity_count(comp_idx)
+        return total_entities
     
     def get_entity_count(self, component_idx=0):
         """Get the number of entities in a component."""
@@ -36,26 +45,22 @@ class AoTFacade:
     
     def get_layout(self, component_idx=0):
         """Get layout from component."""
-        try:
-            component = self.root.children[0].children[component_idx]
-            return component.children[0]
-        except (IndexError, AttributeError):
-            raise IndexError(f"Layout not found at component {component_idx}")
+        return self._get_layout(component_idx)
     
     # Attribute access
     def get_entity_attribute(self, attr_name, component_idx=0, entity_idx=0):
         """Get attribute value from entity."""
-        entity = self.get_entity(component_idx, entity_idx)
+        entity_facade = self.get_entity(component_idx, entity_idx)
         attr_name = attr_name.lower()
         
         if attr_name == "angle":
-            return entity.angle.get_value_level()
+            return entity_facade.get_angle()
         elif attr_name == "size":
-            return entity.size.get_value_level()
+            return entity_facade.get_size()
         elif attr_name == "type":
-            return entity.type.get_value_level()
+            return entity_facade.get_type()
         elif attr_name == "color":
-            return entity.color.get_value_level()
+            return entity_facade.get_color()
         else:
             raise ValueError(f"Unknown attribute: {attr_name}")
     
@@ -65,82 +70,32 @@ class AoTFacade:
         
         if entity_idx is not None:
             # Set for a specific entity
-            entity = self.get_entity(component_idx, entity_idx)
+            entity_facade = self.get_entity(component_idx, entity_idx)
             if attr_name == "angle":
-                entity.angle.set_value_level(value)
+                entity_facade.set_angle(value)
             elif attr_name == "size":
-                entity.size.set_value_level(value)
+                entity_facade.set_size(value)
             elif attr_name == "type":
-                entity.type.set_value_level(value)
+                entity_facade.set_type(value)
             elif attr_name == "color":
-                entity.color.set_value_level(value)
+                entity_facade.set_color(value)
             else:
                 raise ValueError(f"Unknown attribute: {attr_name}")
         else:
             # Set for all entities in the component
-            entities = self.get_entities(component_idx)
-            for entity in entities:
+            entity_facades = self.get_entities(component_idx)
+            for entity_facade in entity_facades:
                 if attr_name == "angle":
-                    entity.angle.set_value_level(value)
+                    entity_facade.set_angle(value)
                 elif attr_name == "size":
-                    entity.size.set_value_level(value)
+                    entity_facade.set_size(value)
                 elif attr_name == "type":
-                    entity.type.set_value_level(value)
+                    entity_facade.set_type(value)
                 elif attr_name == "color":
-                    entity.color.set_value_level(value)
+                    entity_facade.set_color(value)
                 else:
                     raise ValueError(f"Unknown attribute: {attr_name}")
     
-    def add_entity(self, component_idx=0, **attributes):
-        """Add a new entity to a component and return its index."""
-        layout = self.get_layout(component_idx)
-        
-        # Create default bounding box (placeholder)
-        bbox = [0, 0, 50, 50]  # x, y, width, height
-        
-        # Create new entity with default constraints
-        entity_name = f"Entity_{len(layout.children)}"
-        entity = Entity(entity_name, bbox, layout.entity_constraint)
-        
-        # Apply any specified attributes
-        for attr_name, value in attributes.items():
-            if attr_name.lower() == "angle":
-                entity.angle.set_value_level(value)
-            elif attr_name.lower() == "size":
-                entity.size.set_value_level(value)
-            elif attr_name.lower() == "type":
-                entity.type.set_value_level(value)
-            elif attr_name.lower() == "color":
-                entity.color.set_value_level(value)
-        
-        # Add to layout
-        layout._insert(entity)
-        
-        # Update number and position
-        layout.number.set_value(len(layout.children))
-        layout.position.sample(layout.number.get_value())
-        
-        return len(layout.children) - 1
-    
-    def remove_entity(self, component_idx=0, entity_idx=-1):
-        """Remove an entity from a component."""
-        layout = self.get_layout(component_idx)
-        
-        if entity_idx < 0 or entity_idx >= len(layout.children):
-            if entity_idx == -1 and layout.children:
-                # Remove last entity
-                entity_idx = len(layout.children) - 1
-            else:
-                raise IndexError(f"Entity index {entity_idx} out of range")
-        
-        # Remove entity
-        layout.children.pop(entity_idx)
-        
-        # Update number and position
-        layout.number.set_value(len(layout.children))
-        if layout.children:
-            layout.position.sample(layout.number.get_value())
-            
     # Utility methods
     def clone(self):
         """Create deep copy for transformations."""
@@ -151,28 +106,51 @@ class AoTFacade:
         """Access underlying AoT."""
         return self.root
     
-    def get_angle_max_value(self):
-        """Get the maximum number of angle values."""
-        # Assuming Angle has 8 levels (0-7)
-        return 8
-    
-    def print_summary(self):
-        """Print summary of panel."""
-        print(f"AoT Panel - Structure: {self.root.children[0].name}")
-        print(f"Components: {len(self.root.children[0].children)}")
+    def print_summary(self, verbose=False):
+        """Print minimal panel summary with shape information."""
+        # Count total entities across all components
+        total_entities = 0
+        for comp_idx in range(len(self._get_structure().children)):
+            total_entities += self.get_entity_count(comp_idx)
         
-        for comp_idx, component in enumerate(self.root.children[0].children):
-            layout = component.children[0]
-            print(f"  Component {comp_idx}: {component.name} - {len(layout.children)} entities")
-            print(f"    Number: {layout.number.get_value()}")
-            print(f"    Position: {layout.position.get_value()}")
-            
-            # Iterate through all entities in this component
-            for ent_idx, entity in enumerate(layout.children):
-                print(f"    Entity {ent_idx}:")
-                print(f"      Type: {entity.type.get_value_level()}")
-                print(f"      Size: {entity.size.get_value_level()}")
-                print(f"      Color: {entity.color.get_value_level()}")
-                print(f"      Angle: {entity.angle.get_value_level()}")
-                print(f"      Bounding Box: {entity.bbox}")
+        print(f"Total entities: {total_entities}")
+        print()
+        print("Panel Shape Information:")
+        print("========================")
+        
+        # Print shape information for each entity
+        entity_facades = self.get_entities()
+        for i, entity in enumerate(entity_facades):
+            shape_name = entity.get_shape_name()
+            print(f"Entity {i}: {shape_name}")
+
+            if verbose:
+                print(f"  Size: {entity.get_size()}")
+                print(f"  Color: {entity.get_color()}")
+                print(f"  Angle: {entity.get_angle()}")
+        
+        print("========================")
+
+    def _get_structure(self):
+        """Get the structure node from the root."""
+        try:
+            return self.root.children[0]
+        except (IndexError, AttributeError):
+            raise IndexError("Structure not found in AoT")
+
+    def _get_component(self, component_idx=0):
+        """Get a component node at the specified index."""
+        try:
+            structure = self._get_structure()
+            return structure.children[component_idx]
+        except (IndexError, AttributeError):
+            raise IndexError(f"Component not found at index {component_idx}")
+
+    def _get_layout(self, component_idx=0):
+        """Get the layout node from a component."""
+        try:
+            component = self._get_component(component_idx)
+            return component.children[0]
+        except (IndexError, AttributeError):
+            raise IndexError(f"Layout not found in component {component_idx}")
 

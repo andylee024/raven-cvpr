@@ -2,7 +2,7 @@ import random
 import copy
 import traceback
 
-from dataset.core.aot.builders import AoTBuilder
+from dataset.core.aot.operations.builders import AoTBuilder
 from dataset.core.rules.factory import RuleFactory
 
 
@@ -82,7 +82,7 @@ class PuzzleGenerator:
             tuple: (candidates, target_idx) where candidates is list of panels and 
                   target_idx is the index of correct answer
         """
-        from dataset.sampling import sample_attr_avail, sample_attr
+        from dataset.legacy.sampling import sample_attr_avail, sample_attr
         
         # Get modifiable attributes for the answer panel
         modifiable_attr = sample_attr_avail(rule_groups, answer_panel)

@@ -1,5 +1,5 @@
 from dataset.core.operations.base import Operation
-from dataset.const import ANGLE_VALUES
+from dataset.legacy.const import ANGLE_VALUES
 
 class AngleAddition(Operation):
     """Adds angle values (rotation)"""

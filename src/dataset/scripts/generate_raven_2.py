@@ -15,7 +15,7 @@ import json
 from PIL import Image
 
 from dataset.core.puzzle_generator import PuzzleGenerator
-from dataset.rendering import render_panel
+from dataset.legacy.rendering import render_panel
 
 def parse_args():
     """Parse command line arguments."""

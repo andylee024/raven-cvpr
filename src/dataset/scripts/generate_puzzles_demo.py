@@ -19,8 +19,8 @@ from matplotlib.gridspec import GridSpec
 
 # Import from existing codebase
 from dataset.legacy.Rule import Rule_Wrapper
-from dataset.build_tree import build_distribute_four
-from dataset.rendering import render_panel
+from dataset.legacy.build_tree import build_distribute_four
+from dataset.legacy.rendering import render_panel
 
 # Import from new implementation
 from dataset.core.rules.progression import ProgressionRule

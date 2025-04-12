@@ -1,7 +1,7 @@
 import copy
 from dataset.core.handlers.angle_handler import AngleHandler
 from dataset.core.operations.angle_operations import AngleAddition, AngleSubtraction
-from dataset.const import ANGLE_VALUES
+from dataset.legacy.const import ANGLE_VALUES
 
 class AngleRule:
     """Rule specifically for angle rotation"""

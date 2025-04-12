@@ -8,7 +8,7 @@ from dataset.legacy.Rule import Rule_Wrapper
 from dataset.core.rules.progression import ProgressionRule
 
 # Import needed utilities
-from dataset.build_tree import build_distribute_four, build_center_single
+from dataset.legacy.build_tree import build_distribute_four, build_center_single
 
 
 class TestProgressionRule(unittest.TestCase):

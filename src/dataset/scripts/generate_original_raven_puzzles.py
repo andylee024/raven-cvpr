@@ -21,11 +21,11 @@ from dataset.core.rules.progression import ProgressionRule
 from dataset.core.rules.constant import ConstantRule
 from dataset.core.rules.arithmetic import ArithmeticRule
 from dataset.core.rules.distribute_three import DistributeThreeRule
-from dataset.build_tree import (build_distribute_four, build_distribute_nine, 
+from dataset.legacy.build_tree import (build_distribute_four, build_distribute_nine, 
                               build_center_single, build_left_center_single_right_center_single,
                               build_up_center_single_down_center_single)
 
-from dataset.rendering import render_panel
+from dataset.legacy.rendering import render_panel
 
 def parse_args():
     """Parse command line arguments."""
