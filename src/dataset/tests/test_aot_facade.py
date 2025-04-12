@@ -57,4 +57,5 @@ def visualize_panel(facade, output_path):
 if __name__ == "__main__":
     # Run the test
     panel = generate_sample_panel()
+    panel.print_summary()
     visualize_panel(panel, "test_output/sample_panel.png")

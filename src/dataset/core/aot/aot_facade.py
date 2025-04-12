@@ -11,13 +11,6 @@ class AoTFacade:
             raise TypeError("Expected Root node, got something else")
         self.root = aot_root
     
-    @classmethod
-    def create_test_panel(cls, entity_count=1, angle=0, size=1, type_value=1, color=1):
-        """Create a panel with specified attributes for testing."""
-        from dataset.core.aot.builders import create_test_panel
-        root = create_test_panel(entity_count, angle, size, type_value, color)
-        return cls(root)
-    
     # Entity access
     def get_entity(self, component_idx=0, entity_idx=0):
         """Get entity at specified indices."""
@@ -171,11 +164,15 @@ class AoTFacade:
         for comp_idx, component in enumerate(self.root.children[0].children):
             layout = component.children[0]
             print(f"  Component {comp_idx}: {component.name} - {len(layout.children)} entities")
+            print(f"    Number: {layout.number.get_value()}")
+            print(f"    Position: {layout.position.get_value()}")
             
-            if layout.children:
-                entity = layout.children[0]
-                print(f"    Sample Entity Attributes:")
+            # Iterate through all entities in this component
+            for ent_idx, entity in enumerate(layout.children):
+                print(f"    Entity {ent_idx}:")
                 print(f"      Type: {entity.type.get_value_level()}")
                 print(f"      Size: {entity.size.get_value_level()}")
                 print(f"      Color: {entity.color.get_value_level()}")
                 print(f"      Angle: {entity.angle.get_value_level()}")
+                print(f"      Bounding Box: {entity.bbox}")
+
