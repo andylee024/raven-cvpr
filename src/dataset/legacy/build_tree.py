@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
-from dataset.AoT import Component, Layout, Root, Structure
-from dataset.constraints import (gen_entity_constraint, gen_layout_constraint, rule_constraint)
+from dataset.legacy.AoT import Component, Layout, Root, Structure
+from dataset.legacy.constraints import (gen_entity_constraint, gen_layout_constraint, rule_constraint)
 
 
 def build_center_single():

@@ -5,7 +5,7 @@ import copy
 
 import numpy as np
 
-from dataset.const import COLOR_MAX, COLOR_MIN
+from dataset.legacy.const import COLOR_MAX, COLOR_MIN
 
 
 def Rule_Wrapper(name, attr, param, component_idx):

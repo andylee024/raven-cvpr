@@ -5,7 +5,7 @@ import numpy as np
 import copy
 from dataset.core.aot.operations.pruner import AoTPruner
 from dataset.core.rules.progression import ProgressionRule
-from dataset.build_tree import build_distribute_four, build_left_center_single_right_center_single
+from dataset.legacy.build_tree import build_distribute_four, build_left_center_single_right_center_single
 
 
 class TestAoTPruner(unittest.TestCase):

@@ -116,7 +116,7 @@ class AoTSampler:
         Returns:
             New entity with sampled attributes
         """
-        from dataset.AoT import Entity
+        from dataset.legacy.AoT import Entity
         entity = Entity(name, bbox, entity_constraint)
         
         # Sample attributes

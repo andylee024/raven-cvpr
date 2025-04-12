@@ -4,7 +4,7 @@
 import numpy as np
 from scipy.special import comb
 
-from dataset.const import MAX_COMPONENTS, RULE_ATTR
+from dataset.legacy.const import MAX_COMPONENTS, RULE_ATTR
 from dataset.legacy.Rule import Rule_Wrapper
 
 

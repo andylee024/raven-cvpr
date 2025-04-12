@@ -1,4 +1,4 @@
-from dataset.constraints import rule_constraint
+from dataset.legacy.constraints import rule_constraint
 import copy
 
 class AoTPruner:

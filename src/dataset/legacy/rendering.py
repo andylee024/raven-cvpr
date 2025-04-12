@@ -5,8 +5,8 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from dataset.AoT import Root
-from dataset.const import CENTER, DEFAULT_WIDTH, IMAGE_SIZE
+from dataset.legacy.AoT import Root
+from dataset.legacy.const import CENTER, DEFAULT_WIDTH, IMAGE_SIZE
 
 
 def imshow(array):

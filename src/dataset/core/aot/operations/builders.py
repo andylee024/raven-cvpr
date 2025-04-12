@@ -1,17 +1,18 @@
 # src/dataset/core/aot/operations/builder.py
 
-from dataset.AoT import Component, Layout, Root, Structure
-from dataset.constraints import (gen_entity_constraint, gen_layout_constraint)
+from dataset.legacy.AoT import Component, Layout, Root, Structure, Entity
+from dataset.legacy.constraints import (gen_entity_constraint, gen_layout_constraint)
 
-import dataset.build_tree as build_tree
-
+import dataset.legacy.build_tree as build_tree
+import numpy as np
+import copy
 
 class AoTBuilder:
     """Handles construction of different And-Or Tree configurations.
 
     Currently, builder is just a wrapper for build_tree.py functions but it will get replaced later.
     """
-
+    
     @staticmethod
     def build_center_single():
         return build_tree.build_center_single()

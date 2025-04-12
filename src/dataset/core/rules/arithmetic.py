@@ -1,7 +1,7 @@
 from dataset.core.rules.base import Rule
 import copy
 import numpy as np
-from dataset.const import COLOR_MAX, COLOR_MIN
+from dataset.legacy.const import COLOR_MAX, COLOR_MIN
 
 class ArithmeticRule(Rule):
     """Binary arithmetic operation between panel attributes.
