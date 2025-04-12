@@ -16,6 +16,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 
 from dataset.core.puzzle_generator import PuzzleGenerator
 from dataset.core.aot.aot_facade import AoTFacade
+from dataset.core.handlers.type_handler import TypeHandler
 from dataset.rendering import render_panel
 
 def generate_sample_panel():
@@ -52,10 +53,41 @@ def visualize_panel(facade, output_path):
     plt.close()
     
     print(f"Panel visualization saved to: {output_path}")
+    
+
+def print_shape_information(facade):
+    """Print shape information for all entities in the panel."""
+    # Create a type handler to work with shapes
+    type_handler = TypeHandler()
+    
+    print("\nPanel Shape Information:")
+    print("========================")
+    
+    entity_count = facade.get_entity_count()
+    print(f"Panel has {entity_count} entities")
+    
+    # Print shape information for each entity
+    for i in range(entity_count):
+        # Get shape type value
+        shape_value = type_handler.get_value(facade, entity_idx=i)
+        
+        # Get shape name
+        shape_name = type_handler.get_shape_name(shape_value)
+        
+        print(f"Entity {i}: Shape Type = {shape_value} ({shape_name})")
+    
+    print("========================\n")
 
 
 if __name__ == "__main__":
-    # Run the test
+    # Generate and get a sample panel
     panel = generate_sample_panel()
+    
+    # Print panel summary from AoTFacade
     panel.print_summary()
+    
+    # Print shape information using TypeHandler
+    print_shape_information(panel)
+    
+    # Visualize the panel
     visualize_panel(panel, "test_output/sample_panel.png")
