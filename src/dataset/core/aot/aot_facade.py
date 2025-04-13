@@ -128,6 +128,8 @@ class AoTFacade:
                 print(f"  Size: {entity.get_size()}")
                 print(f"  Color: {entity.get_color()}")
                 print(f"  Angle: {entity.get_angle()}")
+                print(f"  Type: {entity.get_type()}")
+                print(f"  Position: {entity.get_position()}")
         
         print("========================")
 
