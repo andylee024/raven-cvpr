@@ -1,17 +1,23 @@
 import copy
 from dataset.core.aot.entity_facade import EntityFacade
+from dataset.core.aot.operations.builders import AoTBuilder
 from dataset.legacy.AoT import Root, Structure, Component, Layout, Entity
 from dataset.legacy.Attribute import Angle
 
 class AoTFacade:
     """Facade providing simplified access to AoT structure."""
     
-    def __init__(self, aot_root):
+    def __init__(self, aot_root=None):
         """Initialize with AoT root node."""
+        if aot_root is None:
+            aot_root = AoTBuilder.build_distribute_nine()
+            aot_root.is_pg = True
+
         if not hasattr(aot_root, 'level') or aot_root.level != "Root":
             raise TypeError("Expected Root node, got something else")
-
+        
         self.root = aot_root
+
     
     def get_entity(self, component_idx=0, entity_idx=0):
         """Get entity at specified indices (wrapped in EntityFacade)."""
@@ -163,4 +169,3 @@ class AoTFacade:
             return component.children[0]
         except (IndexError, AttributeError):
             raise IndexError(f"Layout not found in component {component_idx}")
-

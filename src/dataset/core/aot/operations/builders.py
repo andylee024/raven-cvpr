@@ -23,7 +23,9 @@ class AoTBuilder:
     
     @staticmethod
     def build_distribute_nine():
-        return build_tree.build_distribute_nine()
+        root = build_tree.build_distribute_nine()
+        root.name = "Root"
+        return root
     
     @staticmethod
     def build_left_center_single_right_center_single():

@@ -7,10 +7,10 @@ class TensorPanel:
     
     def __init__(self, tensor=None):
         """Initialize with optional tensor (3,3,5)."""
-        if tensor:
-            self.tensor = tensor
-        else:
+        if tensor is None:
             self.tensor = torch.zeros((3, 3, 5), dtype=torch.int)
+        else:
+            self.tensor = tensor
         self._attributes = ATTRIBUTES
 
     # Attribute access 
@@ -33,6 +33,10 @@ class TensorPanel:
         return attr.to_categorical(value_level)
 
      # Type-specific convenience methods
+    def exists(self, row, col):
+        """Check if entity exists."""
+        return self.get_attr(row, col, 'exists') == 1
+    
     def get_shape(self, row, col):
         """Get type as string name (triangle, square, etc.)."""
         return self.get_attr_categorical(row, col, 'type')
@@ -55,5 +59,6 @@ class TensorPanel:
         return tensor_to_aot(self.tensor)
     
     def clone(self):
+        """Create a deep copy of this panel."""
         return TensorPanel(self.tensor.clone())
 
