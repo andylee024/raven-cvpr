@@ -3,21 +3,9 @@ import matplotlib.pyplot as plt
 import os
 import random
 
-from dataset.core.puzzle_generator import PuzzleGenerator
 from dataset.core.aot.aot_facade import AoTFacade
 from dataset.core.aot.tensor_panel import TensorPanel
 from dataset.legacy.rendering import render_panel
-
-def generate_sample_panel():
-    """Generate a distribute_nine panel using PuzzleGenerator.
-    Returns:
-        facade: An AoTFacade wrapping the generated panel
-    """
-    generator = PuzzleGenerator()
-    puzzle = generator.generate("distribute_nine")
-    panel = puzzle['context'][0]  # Take the first context panel
-    facade = AoTFacade(panel)
-    return facade
 
 def get_uniform_triangle_panel():
     """Generate a panel with uniform triangles."""

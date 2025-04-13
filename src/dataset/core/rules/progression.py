@@ -12,10 +12,18 @@ class ProgressionRule(Rule):
         """
         super().__init__(attr_name)
         self.step = step
-    
+     
     def apply(self, panel):
         """Apply progression to generate next panel."""
-        
+
+        if self.attr_name in ["type", "size", "color", "angle"]:
+            return self._apply_attribute_progression(panel)
+
+        else:
+            raise ValueError(f"Unsupported attribute: {self.attr_name}")
+    
+    def _apply_attribute_progression(self, panel):
+        """Apply progression to attribute attribute."""
         result = panel.clone()
         attr = result._attributes[self.attr_name]
         
@@ -27,3 +35,4 @@ class ProgressionRule(Rule):
                     result.set_attr(row, col, self.attr_name, next_value)
         
         return result
+
