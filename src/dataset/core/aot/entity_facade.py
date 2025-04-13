@@ -1,3 +1,5 @@
+from dataset.utils.bbox_utils import bbox_to_tensor_coordinate, tensor_coordinate_to_bbox
+
 class EntityFacade:
     """Facade for simplified Entity manipulation."""
     
@@ -36,6 +38,14 @@ class EntityFacade:
         """Get entity angle value."""
         return self.entity.angle.get_value_level()
     
+    def get_position(self):
+        """Get entity position."""
+        return bbox_to_tensor_coordinate(self.entity.bbox)
+    
+    def get_tensor_coordinate(self):
+        """Get entity tensor coordinate."""
+        return bbox_to_tensor_coordinate(self.entity.bbox)
+    
     # Attribute setters
     def set_type(self, value):
         """Set entity type value."""
@@ -57,6 +67,11 @@ class EntityFacade:
         self.entity.angle.set_value_level(value)
         return self
     
+    def set_position(self, value):
+        """Set entity position."""
+        self.entity.bbox = tensor_coordinate_to_bbox(value)
+        return self
+    
     # Convenience methods
     def get_shape_name(self):
         """Get readable shape name."""
@@ -64,11 +79,6 @@ class EntityFacade:
         names = {1: "triangle", 2: "square", 3: "pentagon", 
                  4: "hexagon", 5: "circle"}
         return names.get(type_value, "unknown")
-    
-    def get_position(self):
-        """Get (x, y) position."""
-        bbox = self.entity.bbox
-        return (bbox[1], bbox[0])  # (x, y)
     
     # Raw access
     @property

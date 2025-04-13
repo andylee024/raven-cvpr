@@ -96,6 +96,14 @@ class AoTFacade:
                 else:
                     raise ValueError(f"Unknown attribute: {attr_name}")
     
+    def clear_entities(self):
+        """Clear all entities from the panel."""
+        self._get_layout().children = []
+
+    def add_entity(self, entity_facade):
+        """Add an entity to the panel."""
+        self._get_layout().children.append(entity_facade.raw)
+    
     # Utility methods
     def clone(self):
         """Create deep copy for transformations."""
