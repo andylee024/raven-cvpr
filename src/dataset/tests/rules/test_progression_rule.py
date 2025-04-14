@@ -20,10 +20,10 @@ class TestProgressionRule(unittest.TestCase):
         # Create a uniform triangle panel
         rule = ProgressionRule(attr_name='size', step=2)
         source_panel = self.uniform_triangle_panel
-        result_panel = rule.apply(source_panel)
+        result_panel = rule.apply([source_panel])
         
-        source_path = os.path.join(self.output_dir, "source_triangles.png")
-        result_path = os.path.join(self.output_dir, "incremented_size_triangles.png")
+        source_path = os.path.join(self.output_dir, "source_size_triangles.png")
+        result_path = os.path.join(self.output_dir, "progression_size_triangles.png")
         visualize_panel(source_panel.to_aot(), source_path)
         visualize_panel(result_panel.to_aot(), result_path)
 
@@ -32,10 +32,10 @@ class TestProgressionRule(unittest.TestCase):
         # Create a uniform triangle panel
         rule = ProgressionRule(attr_name='color', step=2)
         source_panel = self.uniform_triangle_panel
-        result_panel = rule.apply(source_panel)
+        result_panel = rule.apply([source_panel])
         
-        source_path = os.path.join(self.output_dir, "source_triangles.png")
-        result_path = os.path.join(self.output_dir, "incremented_color_triangles.png")
+        source_path = os.path.join(self.output_dir, "source_color_triangles.png")
+        result_path = os.path.join(self.output_dir, "progression_color_triangles.png")
         visualize_panel(source_panel.to_aot(), source_path)
         visualize_panel(result_panel.to_aot(), result_path)
 

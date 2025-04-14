@@ -35,15 +35,17 @@ def test_progression_rule(output_dir):
     
     # Create a progression rule
     rule1 = ProgressionRule("type", step=1)
-    rule2 = ProgressionRule("color", step=1)
-    ruleset = [rule1, rule2]
+    rule2 = ProgressionRule("color", step=2)
+    rule3 = ProgressionRule("size", step=1)
+    rule4 = ProgressionRule("angle", step=1)
+    ruleset = [rule1, rule2, rule3, rule4]
     
     # Create row generator
     row_generator = RowGenerator(ruleset)
     
     # Create seed panel
-    seed_panel = panel_utils.get_uniform_triangle_panel()
-    # seed_panel = panel_utils.get_random_panel(n_entities=random.randint(3, 9))
+    # seed_panel = panel_utils.get_uniform_triangle_panel()
+    seed_panel = panel_utils.get_random_panel()
     
     # Generate row
     row = row_generator.generate([seed_panel])
