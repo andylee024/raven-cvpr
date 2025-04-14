@@ -81,32 +81,39 @@ class DistractorGenerator:
 
         return TensorPanel(panel_tensor)
 
-    def _swap_entity(self, panel, n_times=1):
-        """Swap two random entities."""
-
-        filled_positions = panel.get_filled_positions()
-        if len(filled_positions) < 2:
-            return panel
-
-        panel_tensor = panel.tensor
-        for _ in range(n_times):
-            # get positions to swap
-            e1_pos, e2_pos = random.sample(filled_positions, 2)
-            e1_x, e1_y = e1_pos 
-            e2_x, e2_y = e2_pos
-
-            # get entities to swap
-            e1 = panel_tensor[e1_x, e1_y, :]
-            e2 = panel_tensor[e2_x, e2_y, :]
-
-            # swap entities
-            panel_tensor[e1_x, e1_y, :] = e2
-            panel_tensor[e2_x, e2_y, :] = e1
-
-        panel.tensor = panel_tensor
-        return TensorPanel(panel_tensor)
-
+    def _swap_entity(self, panel):
+        """Swap two entities in the panel while preserving all attributes.
         
+        Args:
+            panel: The panel to modify
+            
+        Returns:
+            Modified panel with two entities swapped
+        """
+        # First get the filled positions
+        filled_positions = panel.get_filled_positions()
+        
+        # Check if we have at least 2 entities to swap
+        if len(filled_positions) < 2:
+            return panel  # Cannot swap with fewer than 2 entities
+        
+        # Select two random positions to swap
+        pos1, pos2 = random.sample(filled_positions, 2)
+        
+        # Get row and column for each position
+        row1, col1 = pos1
+        row2, col2 = pos2
+        
+        # Create complete copies of the tensor slices
+        entity1 = panel.tensor[row1, col1].clone()
+        entity2 = panel.tensor[row2, col2].clone()
+        
+        # Swap the entities by exchanging their tensor values
+        panel.tensor[row1, col1] = entity2
+        panel.tensor[row2, col2] = entity1
+        
+        return panel
+
     def _remove_entity(self, panel, n_entities=1):
         """Remove a random entity from the panel."""
         filled_positions = panel.get_filled_positions()
@@ -131,7 +138,6 @@ class DistractorGenerator:
         for row, col in entities_to_add:
             panel_tensor[row, col, :] = panel_utils.sample_entity()
 
-        print("panel_tensor add \n", panel_tensor[row, col, :])
         panel.tensor = panel_tensor
         return TensorPanel(panel_tensor)
         
