@@ -12,6 +12,7 @@ import random
 import numpy as np
 
 from dataset.core.generators.puzzle_generator import RowGenerator
+from dataset.core.rules.arithmetic import ArithmeticRule
 from dataset.core.rules.progression import ProgressionRule
 import dataset.utils.panel_utils as panel_utils
 
@@ -22,11 +23,13 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
     
     # Test progression rule
-    test_progression_rule(output_dir)
+    # test_progression_rule(output_dir)
+
+    # Test arithmetic rule
+    test_arithmetic_rule(output_dir)
     
     # You can add more test functions here as you implement additional rules
     # test_arithmetic_rule(output_dir)
-    
     print(f"Test results saved to: {output_dir}")
 
 def test_progression_rule(output_dir):
@@ -44,30 +47,34 @@ def test_progression_rule(output_dir):
     row_generator = RowGenerator(ruleset)
     
     # Create seed panel
-    # seed_panel = panel_utils.get_uniform_triangle_panel()
-    seed_panel = panel_utils.get_random_panel()
+    seed_panel = panel_utils.get_uniform_triangle_panel(3)
+    # seed_panel = panel_utils.get_random_panel()
     
     # Generate row
     row = row_generator.generate([seed_panel])
     
     # Visualize row
     visualize_row(row, os.path.join(output_dir, "progression_type.png"))
+
+def test_arithmetic_rule(output_dir):
+    """Test RowGenerator with an arithmetic rule."""
+
+    print("Testing ArithmeticRule...")
     
-    # # Test with different attributes
-    # attributes = ["color", "size", "angle"]
-    # for attr in attributes:
-    #     print(f"Testing progression on {attr}...")
-    #     rule = ProgressionRule(attr, step=1)
-    #     row_generator = RowGenerator([rule])
-    #     
-    #     # Use random panel for variation
-    #     seed_panel = get_random_panel(n_entities=random.randint(3, 9))
-    #     
-    #     # Generate row
-    #     row = row_generator.generate([seed_panel])
-    #     
-    #     # Visualize
-    #     visualize_row(row, os.path.join(output_dir, f"progression_{attr}.png"))
+    # Create an arithmetic rule
+    rule = ArithmeticRule(attr_name="size", operation="add")
+    row_generator = RowGenerator([rule])
+    
+    # Create seed panel
+    panel0 = panel_utils.get_uniform_triangle_panel(n_entities=3)
+    panel1 = panel0.clone()
+    
+    # Generate row
+    row = row_generator.generate([panel0, panel1])
+    
+    # Visualize row
+    visualize_row(row, os.path.join(output_dir, "arithmetic_size.png"))
+    
 
 def visualize_row(row, output_file):
     """Visualize a row of 3 panels side by side.

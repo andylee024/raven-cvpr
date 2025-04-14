@@ -18,7 +18,7 @@ class ProgressionRule(Rule):
     def apply(self, panels : List[TensorPanel]):
         """Apply progression to generate next panel."""
 
-        if self.attr_name in ["type", "size", "color", "angle"]:
+        if self.attribute_name in ["type", "size", "color", "angle"]:
             return self._apply_attribute_progression(panels[0])
 
         else:
@@ -27,14 +27,14 @@ class ProgressionRule(Rule):
     def _apply_attribute_progression(self, panel):
         """Apply progression to attribute attribute."""
         result = panel.clone()
-        attr = result._attributes[self.attr_name]
+        attr = result._attributes[self.attribute_name]
         
         for row in range(3):
             for col in range(3):
                 if panel.exists(row, col):
-                    current_value = panel.get_attr(row, col, self.attr_name)
+                    current_value = panel.get_attr(row, col, self.attribute_name)
                     next_value = attr.next_value(current_value, self.step)
-                    result.set_attr(row, col, self.attr_name, next_value)
+                    result.set_attr(row, col, self.attribute_name, next_value)
         
         return result
 

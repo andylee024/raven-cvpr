@@ -13,8 +13,12 @@ class Rule(ABC):
         if attr_name not in ATTRIBUTES:
             raise ValueError(f"Invalid attribute name: {attr_name}")
         
-        self.attr_name = attr_name
-        self._attribute = ATTRIBUTES[attr_name]
+        self.attribute = ATTRIBUTES[attr_name]
+        self.attribute_name = self.attribute.name
+        self.attribute_index = self.attribute.index
+        self.attribute_min = self.attribute.min_val
+        self.attribute_max = self.attribute.max_val
+
         self.required_panels = required_panels
 
     @abstractmethod
@@ -35,5 +39,5 @@ class Rule(ABC):
         """
         name = self.__class__.__name__
         if name.endswith("Rule"):
-            name = name[:-4] + " " + self.attr_name
+            name = name[:-4] + " " + self.attribute_name
         return name
