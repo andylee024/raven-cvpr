@@ -23,7 +23,7 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
     
     # Test progression rule
-    # test_progression_rule(output_dir)
+    test_progression_rule(output_dir)
 
     # Test arithmetic rule
     test_arithmetic_rule(output_dir)

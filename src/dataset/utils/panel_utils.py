@@ -4,7 +4,7 @@ import random
 import torch
 
 from dataset.core.aot.aot_facade import AoTFacade
-from dataset.core.aot.attributes import ATTRIBUTES
+from dataset.core.aot.attributes import ATTRIBUTES, CONSTANTS
 from dataset.core.aot.tensor_panel import TensorPanel
 from dataset.legacy.rendering import render_panel
 
@@ -51,10 +51,10 @@ def get_random_panel(n_entities=None):
     positions = get_random_positions(n_entities)
     for row, col in positions:
         panel.set_attr(row, col, 'exists', 1)  # exists = True
-        panel.set_attr(row, col, 'type', random.randint(1, 5))
-        panel.set_attr(row, col, 'size', random.randint(1, 6))
-        panel.set_attr(row, col, 'angle', random.randint(0, 7))
-        panel.set_attr(row, col, 'color', random.randint(0, 9))
+        panel.set_attr(row, col, 'type', random.randint(CONSTANTS.TYPE_MIN.value, CONSTANTS.TYPE_MAX.value))
+        panel.set_attr(row, col, 'size', random.randint(CONSTANTS.SIZE_MIN.value, CONSTANTS.SIZE_MAX.value))
+        panel.set_attr(row, col, 'angle', random.randint(CONSTANTS.ANGLE_MIN.value, CONSTANTS.ANGLE_MAX.value))
+        panel.set_attr(row, col, 'color', random.randint(CONSTANTS.COLOR_MIN.value, CONSTANTS.COLOR_MAX.value))
     
     return panel
 
@@ -64,19 +64,47 @@ def sample_entity(shape_type=None, size=None, angle=None, color=None):
     
     # Create tensor for [exists, type, size, angle, color]
     entity_tensor = torch.zeros(5, dtype=torch.int)
-    
-    exists_index = ATTRIBUTES['exists'].index
-    type_index = ATTRIBUTES['type'].index
-    size_index = ATTRIBUTES['size'].index
-    angle_index = ATTRIBUTES['angle'].index
-    color_index = ATTRIBUTES['color'].index
 
-    entity_tensor[exists_index] = 1 # exists = 1 (b/c entity exists)
-    entity_tensor[type_index] = shape_type if shape_type is not None else random.randint(1, 5)
-    entity_tensor[size_index] = size if size is not None else random.randint(1, 6)
-    entity_tensor[angle_index] = angle if angle is not None else random.randint(0, 7)
-    entity_tensor[color_index] = color if color is not None else random.randint(0, 9)
+    exists_attr = ATTRIBUTES['exists']
+    shape_type_attr = ATTRIBUTES['type']
+    size_attr = ATTRIBUTES['size']
+    angle_attr = ATTRIBUTES['angle']
+    color_attr = ATTRIBUTES['color']
+
+    entity_tensor[exists_attr.index] = 1 # exists = 1 (b/c entity exists)
+
+    if shape_type is not None:
+        entity_tensor[shape_type_attr.index] = shape_type
+    else:
+        entity_tensor[shape_type_attr.index] = random.randint(shape_type_attr.min_val, shape_type_attr.max_val)
+
+    if size is not None:
+        entity_tensor[size_attr.index] = size
+    else:
+        entity_tensor[size_attr.index] = random.randint(size_attr.min_val, size_attr.max_val)
+
+    if angle is not None:
+        entity_tensor[angle_attr.index] = angle
+    else:
+        entity_tensor[angle_attr.index] = random.randint(angle_attr.min_val, angle_attr.max_val)
+
+    if color is not None:
+        entity_tensor[color_attr.index] = color
+    else:
+        entity_tensor[color_attr.index] = random.randint(color_attr.min_val, color_attr.max_val)
     return entity_tensor
+
+def sample_random_attribute_index_and_value():
+    """Sample a random value for an attribute."""
+    all_attribute_names = list(ATTRIBUTES.keys())
+    all_attribute_names.remove('exists')
+
+    random_attribute_name = random.sample(all_attribute_names, 1)
+    random_attribute_index = ATTRIBUTES[random_attribute_name].index
+    random_attribute_min = ATTRIBUTES[random_attribute_name].min
+    random_attribute_max = ATTRIBUTES[random_attribute_name].max
+    random_attribute_value = random.randint(random_attribute_min, random_attribute_max)
+    return random_attribute_index, random_attribute_value
 
 def visualize_panel(panel, output_path):
     """Visualize a single panel and save to file.

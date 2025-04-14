@@ -4,14 +4,46 @@ from dataset.core.aot.operations.builders import AoTBuilder
 from dataset.legacy.AoT import Root, Structure, Component, Layout, Entity
 from dataset.legacy.Attribute import Angle
 
+def _build_generic_root():
+    """Build a generic root node."""
+       # Generate standard 9 positions for a 3x3 grid
+    positions = [(0.16, 0.16, 0.33, 0.33), (0.16, 0.5, 0.33, 0.33), (0.16, 0.83, 0.33, 0.33),
+                 (0.5, 0.16, 0.33, 0.33), (0.5, 0.5, 0.33, 0.33), (0.5, 0.83, 0.33, 0.33),
+                 (0.83, 0.16, 0.33, 0.33), (0.83, 0.5, 0.33, 0.33), (0.83, 0.83, 0.33, 0.33)]
+    
+    layout_constraint = {
+        "Number": [1, 9],  # Allow 1-9 entities
+        "Position": ["planar", positions],  # Provide the actual positions
+        "Uni": [0, 1]  # Allow uniform or non-uniform
+    }
+    
+    entity_constraint = {
+        "Type": [1, 5],    # Allow all types (1-5)
+        "Size": [1, 6],    # Allow all sizes (1-6)
+        "Color": [0, 9],   # Allow all colors (0-9)
+        "Angle": [0, 7]    # Allow all angles (0-7)
+    } 
+    
+    # Create root node with is_pg=True for rendering
+    root = Root("root", is_pg=True)
+    structure = Structure("Distribute_Nine", is_pg=True)
+    component = Component("Component", is_pg=True)
+    layout = Layout("Layout", layout_constraint, entity_constraint, is_pg=True)
+    
+    root._insert(structure)
+    structure._insert(component)
+    component._insert(layout)
+    
+    root.is_pg = True
+    return root
+
 class AoTFacade:
     """Facade providing simplified access to AoT structure."""
     
     def __init__(self, aot_root=None):
         """Initialize with AoT root node."""
         if aot_root is None:
-            aot_root = AoTBuilder.build_distribute_nine()
-            aot_root.is_pg = True
+            aot_root = _build_generic_root()
 
         if not hasattr(aot_root, 'level') or aot_root.level != "Root":
             raise TypeError("Expected Root node, got something else")

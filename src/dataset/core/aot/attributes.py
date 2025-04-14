@@ -35,10 +35,34 @@ class Attribute:
         return categorical_value  # Default to the value itself if not found
 
 # Define standard attributes
+import dataset.legacy.const as const
+from enum import Enum
+
+class CONSTANTS(Enum):
+    """Enum representation of attribute constants"""
+    TYPE_MIN = const.TYPE_MIN + 1
+    TYPE_MAX = const.TYPE_MAX
+    SIZE_MIN = const.SIZE_MIN
+    SIZE_MAX = const.SIZE_MAX
+    ANGLE_MIN = const.ANGLE_MIN
+    ANGLE_MAX = const.ANGLE_MAX
+    COLOR_MIN = const.COLOR_MIN
+    COLOR_MAX = const.COLOR_MAX
+
 ATTRIBUTES = {
-    'exists': Attribute(name='exists', index=0, min_val=0, max_val=1, value_map={0: False, 1: True}),
-    'type': Attribute(name='type', index=1, min_val=1, max_val=5, value_map={1: 'triangle', 2: 'square', 3: 'pentagon', 4: 'hexagon', 5: 'circle'}),
-    'size': Attribute(name='size', index=2, min_val=1, max_val=6, value_map={1: 0.4, 2: 0.5, 3: 0.6, 4: 0.7, 5: 0.8, 6: 0.9}),
-    'angle': Attribute(name='angle', index=3, min_val=0, max_val=7, value_map={0: 0, 1: 45, 2: 90, 3: 135, 4: 180, 5: 225, 6: 270, 7: 315}),
-    'color': Attribute(name='color', index=4, min_val=0, max_val=9, value_map={0: 'red', 1: 'green', 2: 'blue', 3: 'yellow', 4: 'purple', 5: 'orange', 6: 'pink', 7: 'brown', 8: 'gray', 9: 'black'})
+    'exists': Attribute(name='exists', 
+                        index=0, min_val=0, 
+                        max_val=1, value_map={0: False, 1: True}),
+    'type': Attribute(name='type', index=1, # min value +1 b/c you don't want empty
+                      min_val=CONSTANTS.TYPE_MIN.value+1, max_val=CONSTANTS.TYPE_MAX.value, 
+                      value_map={1: 'triangle', 2: 'square', 3: 'pentagon', 4: 'hexagon', 5: 'circle'}),
+    'size': Attribute(name='size', index=2, 
+                      min_val=CONSTANTS.SIZE_MIN.value, max_val=CONSTANTS.SIZE_MAX.value, 
+                      value_map={0: 0.4, 1: 0.5, 2: 0.6, 3: 0.7, 4: 0.8, 5: 0.9}),
+    'angle': Attribute(name='angle', index=3, 
+                       min_val=CONSTANTS.ANGLE_MIN.value, max_val=CONSTANTS.ANGLE_MAX.value, 
+                       value_map={0: 0, 1: 45, 2: 90, 3: 135, 4: 180, 5: 225, 6: 270, 7: 315}),
+    'color': Attribute(name='color', index=4, 
+                       min_val=CONSTANTS.COLOR_MIN.value, max_val=CONSTANTS.COLOR_MAX.value, 
+                       value_map={0: 'red', 1: 'green', 2: 'blue', 3: 'yellow', 4: 'purple', 5: 'orange', 6: 'pink', 7: 'brown', 8: 'gray', 9: 'black'})
 }

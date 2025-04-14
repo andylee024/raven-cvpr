@@ -52,6 +52,16 @@ class TensorPanel:
     def get_color(self, row, col):
         """Get color as string name (red, green, etc.)."""
         return self.get_attr_categorical(row, col, 'color')
+    
+    def get_filled_positions(self):
+        """Get positions of all entities."""
+        positions = torch.nonzero(self.tensor[:, :, 0] == 1, as_tuple=True)
+        return list(zip(positions[0], positions[1]))
+    
+    def get_empty_positions(self):
+        """Get positions of all empty entities."""
+        positions = torch.nonzero(self.tensor[:, :, 0] == 0, as_tuple=True)
+        return list(zip(positions[0], positions[1]))
 
     # Transformation utility
     def to_aot(self):
