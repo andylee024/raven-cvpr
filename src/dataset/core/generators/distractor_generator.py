@@ -11,15 +11,15 @@ class DistractorGenerator:
         Initialize distractor generator.
         
         Args:
-            strategies: List of strategies to use for generating distractors
-                       Default strategies include: 
-                       - "attribute_swap": Change one attribute value
-                       - "entity_remove": Remove one entity
-                       - "entity_add": Add one entity
-                       - "wrong_rule": Apply wrong rule
             difficulty: Float between 0-1 controlling how challenging distractors should be
         """
         self.difficulty = difficulty
+        self.strategies = [
+            "attribute_perturb",
+            "entity_swap",
+            "entity_remove",
+            "entity_add"
+        ]
     
     def generate(self, solution_panel, count=7):
         """
@@ -37,7 +37,7 @@ class DistractorGenerator:
         # Generate distractors using different strategies
         for i in range(count):
             strategy = random.choice(self.strategies)
-            distractor = self._apply_strategy(solution_panel, strategy)
+            distractor = self.apply_strategy(solution_panel, strategy)
             distractors.append(distractor)
             
         return distractors

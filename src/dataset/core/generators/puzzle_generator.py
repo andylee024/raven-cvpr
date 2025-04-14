@@ -1,97 +1,183 @@
-import dataset.utils.panel_utils as panel_utils
-from dataset.core.rules.progression import ProgressionRule
+import os
+import json
+import random
+import time
+from dataset.core.aot.tensor_panel import TensorPanel
 from dataset.core.generators.row_generator import RowGenerator
+from dataset.core.generators.constrained_panel_sampler import ConstrainedPanelSampler
 from dataset.core.generators.distractor_generator import DistractorGenerator
-from dataset.core.aot.attributes import ATTRIBUTES
-
+import dataset.utils.panel_utils as panel_utils
 
 class PuzzleGenerator:
     """Generates complete Raven's Progressive Matrix puzzles."""
     
-    def __init__(self, rules):
-        """Initialize puzzle generator."""
-        self.row_generator = RowGenerator(rules)
+    def __init__(self, config_path=None):
+        """Initialize puzzle generator with optional config path."""
+        self.config_path = config_path
+        self.config = None
+        self.rules = None
+        self.constraints = None
+        self.row_generator = None
+        self.panel_sampler = None
         self.distractor_generator = DistractorGenerator()
-
-        self.distractor_generator = distractor_generator
-        self.seed_options = seed_options or {
-            'panel_types': ['uniform', 'gradient', 'random'],
-            'min_entities': 1,
-            'max_entities': 9
-        }
+        
+        # If config path provided, load it immediately
+        if config_path:
+            self.load_config(config_path)
     
-    def generate(self, rules=None, seed_panels=None):
-        """
-        Generate a complete puzzle.
+    def load_config(self, config_path):
+        """Load a puzzle configuration from JSON file."""
+        with open(config_path, 'r') as f:
+            self.config = json.load(f)
+        
+        # Extract components from config
+        self.constraints = self.config['constraints']
+        self.rules = self._create_rules_from_config()
+        
+        # Initialize components
+        self.row_generator = RowGenerator(self.rules)
+        self.panel_sampler = ConstrainedPanelSampler(self.constraints)
+        
+        print(f"Loaded puzzle config: {self.config['puzzle_info']['name']}")
+        print(f"Difficulty: {self.config['puzzle_info']['difficulty']}")
+        print(f"Description: {self.config['puzzle_info']['description']}")
+        print(f"Rules: {[rule.name for rule in self.rules]}")
+        print(f"Constraints: {self.constraints}")
+    
+    def _create_rules_from_config(self):
+        """Create rule instances from config."""
+        from dataset.core.rules.progression import ProgressionRule
+        from dataset.core.rules.arithmetic import ArithmeticRule
+        from dataset.core.rules.constant import ConstantRule
+        from dataset.core.rules.distribute_three import DistributeThreeRule
+        
+        rule_map = {
+            "progression": ProgressionRule,
+            "arithmetic": ArithmeticRule,
+            "constant": ConstantRule,
+            "distribute_three": DistributeThreeRule
+        }
+        
+        rules = []
+        rule_configs = sorted(self.config["rules"], key=lambda r: r["order"])
+        
+        for rule_config in rule_configs:
+            rule_type = rule_config["type"]
+            rule_class = rule_map[rule_type]
+            rule = rule_class(**rule_config["parameters"])
+            rules.append(rule)
+        
+        return rules
+    
+    def generate(self, num_puzzles=1, max_attempts_per_puzzle=10):
+        """Generate multiple complete puzzles.
         
         Args:
-            rules: Optional list of rules to use
-            seed_panels: Optional seed panels to use
+            num_puzzles: Number of puzzles to generate
+            max_attempts_per_puzzle: Maximum attempts per puzzle
             
         Returns:
-            Dictionary containing puzzle data
+            List of generated puzzles
         """
-        # Generate or use provided rules
-        if rules is None:
-            rules = self._sample_rules()
+        if not self.config:
+            raise ValueError("No puzzle configuration loaded. Call load_config first.")
+        
+        puzzles = []
+        attempt_stats = {"total": 0, "successful": 0, "failed": 0}
+        
+        for i in range(num_puzzles):
+            print(f"Generating puzzle {i+1}/{num_puzzles}...")
             
-        # Generate or use provided seed panels
-        if seed_panels is None:
-            seed_panels = self._generate_seed_panels(rules)
+            # Try generating a valid puzzle with multiple attempts
+            for attempt in range(max_attempts_per_puzzle):
+                attempt_stats["total"] += 1
+                
+                try:
+                    # Generate the 3x3 grid
+                    grid = self._generate_grid()
+                    
+                    # Get the correct answer (bottom right panel)
+                    answer = grid[2][2]
+                    
+                    # Generate distractors
+                    distractors = self.distractor_generator.generate(answer, count=7)
+                    
+                    # Combine answer and distractors into candidates
+                    candidates = [answer] + distractors
+                    
+                    # Shuffle candidates and track correct answer index
+                    indices = list(range(len(candidates)))
+                    random.shuffle(indices)
+                    
+                    # Find where the correct answer ended up after shuffling
+                    target_idx = indices.index(0)
+                    
+                    # Create shuffled candidates 
+                    shuffled_candidates = [candidates[idx] for idx in indices]
+                    
+                    # Convert grid to format expected by visualize functions
+                    context = []
+                    for row in range(3):
+                        for col in range(3):
+                            if not (row == 2 and col == 2):  # Skip bottom right
+                                context.append(grid[row][col].to_aot().raw)
+                    
+                    # Convert candidates to format expected by visualize functions
+                    candidate_panels = [panel.to_aot().raw for panel in shuffled_candidates]
+                    
+                    # Package puzzle data in raven_2.py format
+                    puzzle = {
+                        'context': context,
+                        'candidates': candidate_panels,
+                        'target': target_idx,
+                        'rule_type': self.config['rules'][0]['type'].capitalize(),
+                        'attr': self.config['rules'][0]['parameters']['attr_name'],
+                        'value': self.config['rules'][0]['parameters'].get('step', 0),
+                        'config': self.config['puzzle_info']['name'],
+                        'metadata': {
+                            'name': self.config['puzzle_info']['name'],
+                            'difficulty': self.config['puzzle_info']['difficulty'],
+                            'description': self.config['puzzle_info']['description'],
+                            'rule_types': [rule_config['type'] for rule_config in self.config['rules']]
+                        }
+                    }
+                    
+                    puzzles.append(puzzle)
+                    attempt_stats["successful"] += 1
+                    print(f"  Success! (attempt {attempt+1}/{max_attempts_per_puzzle})")
+                    break
+                    
+                except Exception as e:
+                    attempt_stats["failed"] += 1
+                    print(f"  Attempt {attempt+1}/{max_attempts_per_puzzle} failed: {e}")
+                    
+                    if attempt == max_attempts_per_puzzle - 1:
+                        print(f"  Failed to generate puzzle {i+1} after {max_attempts_per_puzzle} attempts")
         
-        # Generate context (grid) using the row generator
-        grid = self._generate_grid(seed_panels, rules)
+        # Print statistics
+        print(f"\nPuzzle generation complete!")
+        print(f"Total attempts: {attempt_stats['total']}")
+        print(f"Successful: {attempt_stats['successful']}")
+        print(f"Failed: {attempt_stats['failed']}")
+        print(f"Success rate: {attempt_stats['successful']/attempt_stats['total']*100:.1f}%")
         
-        # Get the correct answer from the grid
-        answer = grid[2][2]
-        
-        # Generate distractors
-        distractors = self.distractor_generator.generate(answer)
-        
-        # Package puzzle data
-        puzzle = {
-            'grid': grid,
-            'answer': answer,
-            'distractors': distractors,
-            'rules': rules,
-            'metadata': {
-                'difficulty': self._calculate_difficulty(rules),
-                'rule_types': [rule.__class__.__name__ for rule in rules]
-            }
-        }
-        
-        return puzzle
+        return puzzles
     
-    def _sample_rules(self):
-        """Sample a set of rules for the puzzle."""
-        pass
-    
-    def _generate_seed_panels(self, rules):
-        """Generate seed panels based on rule requirements."""
-        pass
-    
-    def _generate_grid(self, seed_panels, rules):
+    def _generate_grid(self):
         """Generate the full 3×3 grid of panels."""
         # Create empty grid
         grid = [[None for _ in range(3)] for _ in range(3)]
         
         # For each row, generate a sequence using the row_generator
         for i in range(3):
-            # Generate or sample a new seed panel
-            if i == 0:
-                grid[i][0] = seed_panels[0]
-            else:
-                grid[i][0] = self._generate_seed_panel()
-                
+            # Generate seed panel with constraints
+            seed_panel = self.panel_sampler.sample_panel()
+            
             # Generate the row
-            row = self.row_generator.generate([grid[i][0]])
-            
-            # Populate the grid
-            grid[i] = row
-            
+            try:
+                row = self.row_generator.generate([seed_panel])
+                grid[i] = row
+            except Exception as e:
+                raise ValueError(f"Failed to generate row {i}: {e}")
+        
         return grid
-    
-    def _generate_seed_panel(self, panel_type=None):
-        """Generate a random seed panel."""
-        pass
-    

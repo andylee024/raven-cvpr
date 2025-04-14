@@ -1,7 +1,7 @@
 {
     "puzzle_info": {
-      "name": "Increasing Color Progression",
-      "description": "Colors get progressively darker as you move across each row",
+      "name": "Increasing Shape Progression",
+      "description": "Each shapes get progressively more edges as you move across each row",
       "difficulty": "easy"
     },
     
@@ -10,7 +10,7 @@
         "type": "progression",
         "order": 1,
         "parameters": {
-          "attribute_name": "color",
+          "attr_name": "type",
           "step": 1
         }
       }
@@ -21,7 +21,7 @@
       "max_entities": 9,
       "attribute_ranges": {
         "color": {"min": 0, "max": 7},
-        "type": {"min": 1, "max": 5},
+        "type": {"min": 1, "max": 3},
         "size": {"min": 0, "max": 5},
         "angle": {"min": 0, "max": 7}
       }
