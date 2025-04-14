@@ -26,8 +26,9 @@ def main():
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
     
-    # Path to progression_color.json
-    config_path = os.path.join(project_root, "src", "dataset", "config", "progression_color.json")
+    # Path to config
+    print(project_root)
+    config_path = os.path.join(project_root, "src/dataset/config/progression_shape.json")
     
     print(f"Using configuration: {config_path}")
     print(f"Output directory: {output_dir}")
