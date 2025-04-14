@@ -110,3 +110,4 @@ venv.bak/
 /experiments
 /output_puzzles
 /output
+/tests/output

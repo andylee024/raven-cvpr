@@ -1,21 +1,18 @@
 import dataset.utils.panel_utils as panel_utils
 from dataset.core.rules.progression import ProgressionRule
+from dataset.core.generators.row_generator import RowGenerator
+from dataset.core.generators.distractor_generator import DistractorGenerator
 from dataset.core.aot.attributes import ATTRIBUTES
 
 
 class PuzzleGenerator:
     """Generates complete Raven's Progressive Matrix puzzles."""
     
-    def __init__(self, row_generator, distractor_generator, seed_options=None):
-        """
-        Initialize puzzle generator.
-        
-        Args:
-            row_generator: RowGenerator instance
-            distractor_generator: DistractorGenerator instance
-            seed_options: Options for generating seed panels
-        """
-        self.row_generator = row_generator
+    def __init__(self, rules):
+        """Initialize puzzle generator."""
+        self.row_generator = RowGenerator(rules)
+        self.distractor_generator = DistractorGenerator()
+
         self.distractor_generator = distractor_generator
         self.seed_options = seed_options or {
             'panel_types': ['uniform', 'gradient', 'random'],
