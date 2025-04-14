@@ -1,3 +1,5 @@
+from typing import List
+from dataset.core.aot.tensor_panel import TensorPanel
 from dataset.core.rules.base import Rule
 
 class ProgressionRule(Rule):
@@ -13,11 +15,11 @@ class ProgressionRule(Rule):
         super().__init__(attr_name)
         self.step = step
      
-    def apply(self, panel):
+    def apply(self, panels : List[TensorPanel]):
         """Apply progression to generate next panel."""
 
         if self.attr_name in ["type", "size", "color", "angle"]:
-            return self._apply_attribute_progression(panel)
+            return self._apply_attribute_progression(panels[0])
 
         else:
             raise ValueError(f"Unsupported attribute: {self.attr_name}")

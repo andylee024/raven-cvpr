@@ -7,6 +7,7 @@ from dataset.core.aot.aot_facade import AoTFacade
 from dataset.core.aot.tensor_panel import TensorPanel
 from dataset.legacy.rendering import render_panel
 
+
 def get_uniform_triangle_panel():
     """Generate a panel with uniform triangles."""
     panel = TensorPanel()
@@ -53,18 +54,21 @@ def get_random_panel(n_entities):
     return panel
 
 
-def visualize_panel(facade, output_path):
+def visualize_panel(panel, output_path):
     """Visualize a single panel and save to file.
     
     Args:
         facade: AoTFacade containing the panel
         output_path: Path to save the visualization
     """
+    if isinstance(panel, TensorPanel):
+        panel = panel.to_aot()
+    
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     # Render the panel
-    rendered_image = render_panel(facade.raw)
+    rendered_image = render_panel(panel.raw)
     
     # Save visualization
     plt.figure(figsize=(8, 8))

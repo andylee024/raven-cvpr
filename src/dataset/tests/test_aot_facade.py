@@ -5,15 +5,15 @@
 Utility function to generate and visualize a distribute_nine panel.
 """
 
-from dataset.utils.panel_utils import generate_sample_panel, visualize_panel
-from dataset.core.handlers.type_handler import TypeHandler
+from dataset.utils.panel_utils import get_random_panel, visualize_panel
 
 
 if __name__ == "__main__":
     # Generate and get a sample panel
-    panel = generate_sample_panel()
-    
-    # Print panel summary from AoTFacade
+    panel = get_random_panel(n_entities=5)
+
+    # convert to AoT to access summary
+    panel = panel.to_aot()
     panel.print_summary(verbose=False)
     
     # Visualize the panel
