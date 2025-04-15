@@ -132,3 +132,53 @@ def visualize_panel(panel, output_path):
     plt.close()
     
     print(f"Panel visualization saved to: {output_path}")
+
+def perturb_attribute(panel, position=None, attribute_name=None):
+    """Perturb a single attribute of an entity at the given position.
+    
+    Args:
+        panel: The panel to modify
+        position: (row, col) position of the entity to modify. If None, a random filled position is chosen.
+        attribute_name: Specific attribute to modify. If None, a random attribute is chosen.
+    
+    Returns:
+        Tuple of (attribute_index, new_value) that was changed
+    """
+    # Clone to avoid modifying the original
+    result = panel.clone()
+    
+    # If no position specified, choose a random filled position
+    filled_positions = panel.get_filled_positions()
+    if not filled_positions:
+        raise ValueError("Panel has no entities to perturb")
+        
+    if position is None:
+        position = random.choice(filled_positions)
+    
+    row, col = position
+    
+    # If no attribute specified, choose a random one (excluding 'exists')
+    valid_attributes = ['type', 'size', 'angle', 'color']
+    if attribute_name is None:
+        attribute_name = random.choice(valid_attributes)
+    
+    # Get the attribute properties
+    attribute = ATTRIBUTES[attribute_name]
+    attribute_index = attribute.index
+    min_val = attribute.min_val
+    max_val = attribute.max_val
+    
+    # Get current value
+    current_value = panel.tensor[row, col, attribute_index].item()
+    
+    # Generate a new value that's different from the current one
+    possible_values = list(range(min_val, max_val + 1))
+    if current_value in possible_values and len(possible_values) > 1:
+        possible_values.remove(current_value)
+    
+    new_value = random.choice(possible_values)
+    
+    # Set the new value
+    result.tensor[row, col, attribute_index] = new_value
+    
+    return result

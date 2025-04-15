@@ -80,6 +80,8 @@ class PuzzleGenerator:
                     
                     if attempt == max_attempts_per_puzzle - 1:
                         print(f"  Failed to generate puzzle {i+1} after {max_attempts_per_puzzle} attempts")
+                    import traceback
+                    traceback.print_exc()  # Add this line to see the full stack trace
         
         # print stats
         self._print_generation_stats(attempt_stats)

@@ -67,19 +67,14 @@ class DistractorGenerator:
     
     # Strategy implementation methods
     def _perturb_attribute(self, panel, n_perturbations=3):
-        """Change a random attribute of a random entity."""
-        filled_positions = panel.get_filled_positions()
-
-        # pick an entity to perturb
-        pos = random.sample(filled_positions, 1)
-
-        # perturb a single attribute (n times)
-        panel_tensor = panel.tensor
+        """Change random attributes of random entities."""
+        result_panel = panel.clone()
+        
+        # Apply multiple perturbations
         for _ in range(n_perturbations):
-            attribute_index, attribute_value = panel_utils.sample_random_attribute_index_and_value()
-            panel_tensor[pos[0], pos[1], attribute_index] = attribute_value
-
-        return TensorPanel(panel_tensor)
+            result_panel = panel_utils.perturb_attribute(result_panel)
+        
+        return result_panel
 
     def _swap_entity(self, panel):
         """Swap two entities in the panel while preserving all attributes.
