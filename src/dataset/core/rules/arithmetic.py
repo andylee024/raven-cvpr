@@ -3,7 +3,7 @@ import torch
 
 from dataset.core.aot.tensor_panel import TensorPanel
 from dataset.core.rules.base import Rule
-from dataset.utils.panel_utils import sample_entity
+from dataset.utils.entity_utils import sample_entity_tensor
 
 class ArithmeticRule(Rule):
     """Rule that combines color or size values from two panels by tensor operations."""
@@ -53,8 +53,16 @@ class ArithmeticRule(Rule):
                         new_val = (panel1.tensor[row, col, self.attribute_index] - 
                                   panel2.tensor[row, col, self.attribute_index]) % (self.attribute_max + 1)
 
-                    result_tensor[row, col] = sample_entity()
-                    result_tensor[row, col, self.attribute_index] = new_val
+                    if self.attribute_name == "type":
+                        entity = sample_entity_tensor(shape_type=new_val)
+                    elif self.attribute_name == "size":
+                        entity = sample_entity_tensor(size=new_val)
+                    elif self.attribute_name == "color":
+                        entity = sample_entity_tensor(color=new_val)
+                    elif self.attribute_name == "angle":
+                        entity = sample_entity_tensor(angle=new_val)
+                    
+                    result_tensor[row, col] = entity
         
         return TensorPanel(result_tensor)
     

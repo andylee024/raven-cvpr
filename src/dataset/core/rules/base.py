@@ -10,7 +10,7 @@ class Rule(ABC):
     def __init__(self, attr_name, required_panels=1):
         """Initialize a rule."""
 
-        if attr_name not in ATTRIBUTES:
+        if attr_name not in ATTRIBUTES and attr_name != "number":
             raise ValueError(f"Invalid attribute name: {attr_name}")
         
         self.attribute = ATTRIBUTES[attr_name]

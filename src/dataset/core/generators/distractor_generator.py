@@ -131,7 +131,7 @@ class DistractorGenerator:
 
         panel_tensor = panel.tensor
         for row, col in entities_to_add:
-            panel_tensor[row, col, :] = panel_utils.sample_entity()
+            panel_tensor[row, col, :] = panel_utils.sample_entity_tensor()
 
         panel.tensor = panel_tensor
         return TensorPanel(panel_tensor)

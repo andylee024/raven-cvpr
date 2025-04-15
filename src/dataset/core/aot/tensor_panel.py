@@ -72,3 +72,7 @@ class TensorPanel:
         """Create a deep copy of this panel."""
         return TensorPanel(self.tensor.clone())
 
+    @property
+    def total_entities(self):
+        """Get total number of entities in the panel."""
+        return len(self.get_filled_positions())

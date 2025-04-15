@@ -1,6 +1,8 @@
 from typing import List
 from dataset.core.aot.tensor_panel import TensorPanel
 from dataset.core.rules.base import Rule
+from dataset.core.aot.attributes import CONSTANTS
+from dataset.utils.panel_utils import add_entities_to_panel, remove_entities_from_panel
 
 class ProgressionRule(Rule):
     """Rule that increments/decrements an attribute by a fixed step."""
@@ -20,7 +22,8 @@ class ProgressionRule(Rule):
 
         if self.attribute_name in ["type", "size", "color", "angle"]:
             return self._apply_attribute_progression(panels[0])
-
+        elif self.attribute_name == "number":
+            return self._apply_number_progression(panels[0])
         else:
             raise ValueError(f"Unsupported attribute: {self.attr_name}")
     
@@ -38,3 +41,18 @@ class ProgressionRule(Rule):
         
         return result
 
+    def _apply_number_progression(self, panel):
+        """Apply progression to the number of entities in the panel."""
+        current_count = panel.total_entities
+        target_count = current_count + self.step
+        
+        assert target_count >= CONSTANTS.MIN_ENTITIES.value
+        assert target_count <= CONSTANTS.MAX_ENTITIES.value
+        
+        delta = target_count - current_count
+        if delta > 0:
+            return add_entities_to_panel(panel, n=delta)
+        elif delta < 0:
+            return remove_entities_from_panel(panel, n=abs(delta))
+        else:
+            return panel.clone()

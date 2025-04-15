@@ -40,6 +40,8 @@ from enum import Enum
 
 class CONSTANTS(Enum):
     """Enum representation of attribute constants"""
+    MAX_ENTITIES = 9
+    MIN_ENTITIES = 0
     TYPE_MIN = const.TYPE_MIN + 1
     TYPE_MAX = const.TYPE_MAX
     SIZE_MIN = const.SIZE_MIN
@@ -50,6 +52,11 @@ class CONSTANTS(Enum):
     COLOR_MAX = const.COLOR_MAX
 
 ATTRIBUTES = {
+    'number': Attribute(name='number', 
+                        index=-1, 
+                        min_val=CONSTANTS.MIN_ENTITIES.value, 
+                        max_val=CONSTANTS.MAX_ENTITIES.value,
+                        value_map={i: i for i in range(CONSTANTS.MIN_ENTITIES.value, CONSTANTS.MAX_ENTITIES.value + 1)}),
     'exists': Attribute(name='exists', 
                         index=0, min_val=0, 
                         max_val=1, value_map={0: False, 1: True}),

@@ -1,0 +1,29 @@
+{
+    "puzzle_info": {
+      "name": "Increasing Number Progression",
+      "description": "Each panel gets progressively more entities as you move across each row",
+      "difficulty": "easy"
+    },
+    
+    "rules": [
+      {
+        "type": "progression",
+        "order": 1,
+        "parameters": {
+          "attr_name": "number",
+          "step": 1
+        }
+      }
+    ],
+    
+    "constraints": {
+      "min_entities": 1,
+      "max_entities": 7,
+      "attribute_ranges": {
+        "color": {"min": 0, "max": 7},
+        "type": {"min": 1, "max": 3},
+        "size": {"min": 0, "max": 5},
+        "angle": {"min": 0, "max": 7}
+      }
+    }
+  }
