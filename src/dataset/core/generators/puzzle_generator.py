@@ -16,12 +16,13 @@ class PuzzleGenerator:
 
         # load rules and constraints from config
         self.config = self.load_config(config_path)
+        self.difficulty = self.config['puzzle_info']['difficulty']
         self.rules = self._create_rules_from_config(self.config['rules'])
         self.constraints = self.config['constraints']
 
         self.row_generator = RowGenerator(self.rules)
         self.panel_sampler = ConstrainedPanelSampler(self.constraints)
-        self.distractor_generator = DistractorGenerator()
+        self.distractor_generator = DistractorGenerator(difficulty=self.difficulty)
         
     
     def load_config(self, config_path):

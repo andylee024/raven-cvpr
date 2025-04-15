@@ -9,7 +9,6 @@ Tests all strategies individually and collectively with different difficulty lev
 import unittest
 import matplotlib.pyplot as plt
 import os
-import random
 import torch
 import sys
 

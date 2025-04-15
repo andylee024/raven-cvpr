@@ -4,7 +4,7 @@ from dataset.core.aot.tensor_panel import TensorPanel
 from dataset.utils import panel_utils
 
 class DistractorGenerator:
-    """Generates distractor panels by perturbing a solution panel with controllable difficulty."""
+    """Generates distractor panels by perturbing a solution panel."""
     
     def __init__(self, difficulty="medium"):
         """
@@ -12,119 +12,96 @@ class DistractorGenerator:
         
         Args:
             difficulty: String indicating difficulty level ("easy", "medium", "hard")
-                       - "easy": Very obvious differences (easy to spot)
-                       - "medium": Moderate differences
-                       - "hard": Subtle differences (hard to spot)
         """
-        # Convert string difficulty to numerical value
-        self.difficulty_mapping = {
-            "easy": 0.8,    # High numerical value = more obvious changes
-            "medium": 0.5,  # Medium numerical value = balanced changes
-            "hard": 0.2     # Low numerical value = subtle changes
-        }
+        self.difficulty = difficulty
+    
+    @property
+    def strategies(self):
+        """
+        Define strategies by category.
         
-        self.difficulty = self.difficulty_mapping.get(difficulty, 0.5)
-        
-        # Organize strategies by difficulty
-        self.strategies_by_difficulty = {
-            # Hard difficulty (subtle changes)
+        Returns:
+            Dictionary of strategy categories and their corresponding strategies
+        """
+        return {
+            # Hard strategies (subtle changes)
             "hard": [
-                "attribute_perturb",     # Change individual attributes
-                "entity_swap"            # Swap entity positions
-            ],
-            
-            # Medium difficulty (noticeable changes)
-            "medium": [
+                "attribute_perturb",        # Small attribute changes
+                "entity_swap",              # Swap entity positions
                 "global_attribute_change",  # Change same attribute for all entities
-                "rotate_all_entities",      # Rotate all entities consistently
-                "swap_attributes",          # Swap attributes between entities
-                "entity_add",               # Add an entity
-                "entity_remove"             # Remove an entity
+                "swap_attributes"          # Swap attributes between entities
             ],
             
-            # Easy difficulty (obvious changes)
+            # Medium strategies
+            "medium": [
+                "rotate_all_entities",  # Rotate all entities
+                "entity_add",           # Add an entity
+                "entity_remove"         # Remove an entity
+            ],
+            
+            # Easy strategies (obvious changes)
             "easy": [
-                "reflect_panel",         # Reflect entire panel
-                "scramble_positions"     # Completely rearrange entities
+                "reflect_panel",        # Reflect entire panel
+                "scramble_positions"    # Completely rearrange entities
             ]
         }
     
-    def generate(self, solution_panel, count=7, rule_info=None):
+    def _sample_strategy_based_on_distribution(self):
+        """Sample a strategy based on the difficulty distribution."""
+        
+        # Define strategy distributions for each difficulty level
+        strategy_distributions = {
+            "hard": [
+                ("hard", 0.7),     # 70% hard strategies
+                ("medium", 0.25),  # 25% medium strategies
+                ("easy", 0.05)     # 5% easy strategies
+            ],
+            "medium": [
+                ("hard", 0.3),     # 30% hard strategies
+                ("medium", 0.5),   # 50% medium strategies
+                ("easy", 0.2)      # 20% easy strategies
+            ],
+            "easy": [
+                ("hard", 0.05),    # 5% hard strategies
+                ("medium", 0.35),  # 35% medium strategies
+                ("easy", 0.6)      # 60% easy strategies
+            ]
+        }
+        
+        # Get distribution for the specified difficulty
+        distribution = strategy_distributions[self.difficulty]
+        categories, weights = zip(*distribution)
+        category = random.choices(categories, weights=weights, k=1)[0]
+        strategy = random.choice(self.strategies[category])
+        
+        return strategy
+    
+    def generate(self, solution_panel, count=7):
         """
         Generate distractor panels by perturbing a solution panel.
         
         Args:
             solution_panel: The correct answer panel
             count: Number of distractor panels to generate
-            rule_info: Optional dict with information about the rule type
             
         Returns:
             List of distractor panels
         """
         distractors = []
-        
-        # Determine strategy weights based on difficulty
-        difficulty_level = self._get_difficulty_level()
-        
-        # Calculate weights for each difficulty category
-        weights = self._calculate_strategy_weights(difficulty_level)
-        
-        # Generate distractors
-        for i in range(count):
-            # Select strategy category based on weights
-            category = random.choices(
-                ["hard", "medium", "easy"], 
-                weights=[weights["hard"], weights["medium"], weights["easy"]], 
-                k=1
-            )[0]
-            
-            # Select a specific strategy from the chosen category
-            strategy = random.choice(self.strategies_by_difficulty[category])
-            
-            # Apply the strategy to generate a distractor
-            distractor = self.apply_strategy(solution_panel, strategy, rule_info)
+        for _ in range(count):
+            strategy = self._sample_strategy_based_on_distribution()
+            distractor = self.apply_strategy(solution_panel, strategy)
             distractors.append(distractor)
             
         return distractors
     
-    def _get_difficulty_level(self):
-        """Convert numerical difficulty to string level."""
-        if self.difficulty <= 0.3:
-            return "hard"
-        elif self.difficulty <= 0.7:
-            return "medium"
-        else:
-            return "easy"
-    
-    def _calculate_strategy_weights(self, difficulty_level):
-        """Calculate weights for each strategy category based on difficulty."""
-        if difficulty_level == "hard":
-            return {
-                "hard": 0.7,     # Mostly subtle changes
-                "medium": 0.25,
-                "easy": 0.05
-            }
-        elif difficulty_level == "medium":
-            return {
-                "hard": 0.3,
-                "medium": 0.5,   # Mostly medium changes
-                "easy": 0.2
-            }
-        else:  # easy
-            return {
-                "hard": 0.05,
-                "medium": 0.35,
-                "easy": 0.6      # Mostly obvious changes
-            }
-    
-    def apply_strategy(self, panel, strategy, rule_info=None):
+    def apply_strategy(self, panel, strategy):
         """
         Apply a specific perturbation strategy to generate a distractor.
         
         Args:
             panel: Solution panel to perturb
             strategy: Strategy to apply
-            rule_info: Optional information about rules
             
         Returns:
             Perturbed panel
@@ -133,22 +110,16 @@ class DistractorGenerator:
         
         # Apply the chosen strategy
         if strategy == "attribute_perturb":
-            # For hard difficulty, make fewer perturbations
-            n_perturbations = max(1, int(self.difficulty * 5))
-            return self._perturb_attribute(result, n_perturbations)
+            return self._perturb_attribute(result)
         
         elif strategy == "entity_swap":
             return self._swap_entity(result)
         
         elif strategy == "entity_remove":
-            # For easier difficulty, remove more entities
-            n_entities = max(1, int(self.difficulty * 2))
-            return self._remove_entity(result, n_entities)
+            return self._remove_entity(result)
         
         elif strategy == "entity_add":
-            # For easier difficulty, add more entities
-            n_entities = max(1, int(self.difficulty * 2))
-            return self._add_entity(result, n_entities)
+            return self._add_entity(result)
         
         elif strategy == "reflect_panel":
             return self._reflect_panel(result)
@@ -161,19 +132,19 @@ class DistractorGenerator:
             
         elif strategy == "scramble_positions":
             return self._scramble_positions(result)
-            
+        
         elif strategy == "swap_attributes":
             return self._swap_attributes(result)
         
         return result
     
     # Strategy implementation methods
-    def _perturb_attribute(self, panel, n_perturbations=3):
+    def _perturb_attribute(self, panel):
         """Change random attributes of random entities."""
         result_panel = panel.clone()
         
         # Apply multiple perturbations
-        for _ in range(n_perturbations):
+        for _ in range(3):
             result_panel = panel_utils.perturb_attribute(result_panel)
         
         return result_panel
@@ -204,10 +175,10 @@ class DistractorGenerator:
         
         return panel
 
-    def _remove_entity(self, panel, n_entities=1):
+    def _remove_entity(self, panel):
         """Remove a random entity from the panel."""
         filled_positions = panel.get_filled_positions()
-        n_entities = min(n_entities, len(filled_positions))
+        n_entities = min(2, len(filled_positions))
         entities_to_remove = random.sample(filled_positions, n_entities)
 
         panel_tensor = panel.tensor
@@ -216,11 +187,11 @@ class DistractorGenerator:
         panel.tensor = panel_tensor
         return TensorPanel(panel_tensor)
         
-    def _add_entity(self, panel, n_entities=1):
+    def _add_entity(self, panel):
         """Add a random entity to the panel."""
         # Find all positions with entities
         empty_positions = panel.get_empty_positions()
-        n_entities = min(n_entities, len(empty_positions))
+        n_entities = min(2, len(empty_positions))
         entities_to_add = random.sample(empty_positions, n_entities)
 
         panel_tensor = panel.tensor
@@ -336,7 +307,7 @@ class DistractorGenerator:
         attribute = random.choice(['type', 'size', 'angle', 'color'])
         
         # Select positions to swap attributes between
-        num_swaps = min(len(filled_positions) // 2, 2 + int(self.difficulty * 3))
+        num_swaps = min(len(filled_positions) // 2, 2)
         positions_to_swap = []
         
         # Create pairs of positions
