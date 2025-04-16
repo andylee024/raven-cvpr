@@ -18,20 +18,15 @@ from dataset.core.visualization.puzzle_visualizer import PuzzleVisualizer
 
 def main():
     """Generate sample progression color puzzles."""
-    # Settings
-    output_dir = os.path.join(project_root, "output", "progression_demo")
+
+    # user inputs
+    config_path = os.path.join(project_root, "src/dataset/config/progression_shape.json")
     num_puzzles = 3
     highlight_solution = True
     
-    # Ensure output directory exists
+    # Settings
+    output_dir = os.path.join(project_root, "output", "puzzle_generator_demo")
     os.makedirs(output_dir, exist_ok=True)
-    
-    # Path to config
-    print(project_root)
-    config_path = os.path.join(project_root, "src/dataset/config/progression_shape.json")
-    
-    print(f"Using configuration: {config_path}")
-    print(f"Output directory: {output_dir}")
     
     # Create puzzle generator and visualizer
     generator = PuzzleGenerator(config_path)

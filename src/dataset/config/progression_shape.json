@@ -1,16 +1,16 @@
 {
     "puzzle_info": {
       "name": "Increasing Shape Progression",
-      "description": "Each shapes get progressively more edges as you move across each row",
+      "description": "Each shape gets progressively more edges as you move across each row",
       "difficulty": "easy"
     },
     
     "rules": [
       {
-        "type": "progression",
+        "type": "attribute.progression",
         "order": 1,
         "parameters": {
-          "attr_name": "type",
+          "attribute_name": "type",
           "step": 1
         }
       }

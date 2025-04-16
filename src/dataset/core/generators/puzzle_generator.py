@@ -4,7 +4,7 @@ import random
 from dataset.core.generators.row_generator import RowGenerator
 from dataset.core.generators.constrained_panel_sampler import ConstrainedPanelSampler
 from dataset.core.generators.distractor_generator import DistractorGenerator
-from dataset.core.rules.factory import RuleFactory
+from dataset.core.rules import instantiate_rule
 
 class PuzzleGenerator:
     """Generates complete Raven's Progressive Matrix puzzles."""
@@ -12,9 +12,6 @@ class PuzzleGenerator:
     def __init__(self, config_path):
         """Initialize puzzle generator with config path."""
         self.config_path = config_path
-        self.load_config(config_path)
-
-        # load rules and constraints from config
         self.config = self.load_config(config_path)
         self.difficulty = self.config['puzzle_info']['difficulty']
         self.rules = self._create_rules_from_config(self.config['rules'])
@@ -23,7 +20,6 @@ class PuzzleGenerator:
         self.row_generator = RowGenerator(self.rules)
         self.panel_sampler = ConstrainedPanelSampler(self.constraints)
         self.distractor_generator = DistractorGenerator(difficulty=self.difficulty)
-        
     
     def load_config(self, config_path):
         """Load a puzzle configuration from JSON file."""
@@ -32,14 +28,12 @@ class PuzzleGenerator:
             return config
     
     def _create_rules_from_config(self, rules_config):
-        """Create rule instances from config."""
-        
-        factory = RuleFactory()
-        rule_configs = sorted(rules_config, key=lambda r: r["order"])
-        
+        """Create rule instances from config using the new rule registry system."""
+        rule_configs = sorted(rules_config, key=lambda r: r.get("order", 0))
         rules = []
+        
         for rule_config in rule_configs:
-            rule = factory.create_from_config(rule_config)
+            rule = instantiate_rule(rule_config)
             rules.append(rule)
         
         return rules
@@ -82,21 +76,14 @@ class PuzzleGenerator:
                     if attempt == max_attempts_per_puzzle - 1:
                         print(f"  Failed to generate puzzle {i+1} after {max_attempts_per_puzzle} attempts")
                     import traceback
-                    traceback.print_exc()  # Add this line to see the full stack trace
+                    traceback.print_exc()
         
         # print stats
         self._print_generation_stats(attempt_stats)
         return puzzles
     
     def _handle_candidate_creation(self, answer):
-        """Generate and prepare candidates (answer + distractors).
-        
-        Args:
-            answer: The correct answer panel
-            
-        Returns:
-            Tuple of (candidate_panels, target_index)
-        """
+        """Generate and prepare candidates (answer + distractors)."""
         # Generate distractors
         distractors = self.distractor_generator.generate(answer, count=7)
         
@@ -119,14 +106,7 @@ class PuzzleGenerator:
         return candidate_panels, target_idx
     
     def _create_context_from_grid(self, grid):
-        """Convert a grid to context format (excluding bottom right panel).
-        
-        Args:
-            grid: The 3x3 puzzle grid
-            
-        Returns:
-            List of panels in context format
-        """
+        """Convert a grid to context format (excluding bottom right panel)."""
         context = []
         for row in range(3):
             for col in range(3):
@@ -136,23 +116,38 @@ class PuzzleGenerator:
         return context
     
     def _format_puzzle_data(self, context, candidates, target_idx):
-        """Format puzzle data into a standardized dictionary.
+        """Format puzzle data into a standardized dictionary."""
+        # Extract main rule info
+        main_rule = self.config['rules'][0]
+        rule_type = main_rule['type']
         
-        Args:
-            context: List of panels in the context grid
-            candidates: List of candidate panels
-            target_idx: Index of the correct answer
-            
-        Returns:
-            Dictionary with formatted puzzle data
-        """
+        # Handle different rule types
+        if rule_type.startswith('attribute.'):
+            # For attribute rules
+            parameters = main_rule.get('parameters', {})
+            attr_name = parameters.get('attribute_name', 'unknown')
+            step = parameters.get('step', 0)
+        elif rule_type.startswith('spatial.'):
+            # For spatial rules
+            parameters = main_rule.get('parameters', {})
+            attr_name = rule_type.split('.', 1)[1]  # e.g., "spatial.rotation" -> "rotation"
+            step = parameters.get('step', 0)
+        elif rule_type == 'composite':
+            # For composite rules
+            attr_name = "composite"
+            step = 0
+        else:
+            # Fallback
+            attr_name = "unknown"
+            step = 0
+        
         return {
             'context': context,
             'candidates': candidates,
             'target': target_idx,
-            'rule_type': self.config['rules'][0]['type'].capitalize(),
-            'attr': self.config['rules'][0]['parameters']['attr_name'],
-            'value': self.config['rules'][0]['parameters'].get('step', 0),
+            'rule_type': rule_type.capitalize(),
+            'attr': attr_name,
+            'value': step,
             'config': self.config['puzzle_info']['name'],
             'metadata': {
                 'name': self.config['puzzle_info']['name'],
@@ -177,11 +172,7 @@ class PuzzleGenerator:
         return grid
     
     def _print_generation_stats(self, stats):
-        """Print generation statistics.
-        
-        Args:
-            stats: Dictionary with generation statistics
-        """
+        """Print generation statistics."""
         print(f"\nPuzzle generation complete!")
         print(f"Total attempts: {stats['total']}")
         print(f"Successful: {stats['successful']}")

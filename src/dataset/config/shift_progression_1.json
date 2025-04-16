@@ -1,0 +1,20 @@
+{
+    "name": "Right Shift with Type Progression",
+    "type": "composite",
+    "rules": [
+      {
+        "type": "spatial.shift",
+        "parameters": {
+          "direction": "right",
+          "step": 1
+        }
+      },
+      {
+        "type": "attribute.progression",
+        "parameters": {
+          "attribute_name": "type",
+          "step": 1
+        }
+      }
+    ]
+  }

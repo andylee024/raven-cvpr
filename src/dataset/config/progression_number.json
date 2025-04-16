@@ -7,10 +7,10 @@
     
     "rules": [
       {
-        "type": "progression",
+        "type": "attribute.progression",
         "order": 1,
         "parameters": {
-          "attr_name": "number",
+          "attribute_name": "number",
           "step": 1
         }
       }
