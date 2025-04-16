@@ -13,7 +13,7 @@ class PuzzleGenerator:
         """Initialize puzzle generator with config path."""
         self.config_path = config_path
         self.config = self.load_config(config_path)
-        self.difficulty = self.config['puzzle_info']['difficulty']
+        self.difficulty = self.config['distractors']['difficulty']
         self.rules = self._create_rules_from_config(self.config['rules'])
         self.constraints = self.config['constraints']
 
@@ -33,7 +33,21 @@ class PuzzleGenerator:
         rules = []
         
         for rule_config in rule_configs:
-            rule = instantiate_rule(rule_config)
+            # Handle composite rules differently
+            if rule_config.get("type") == "composite":
+                # This rule config contains nested rules
+                subrules = []
+                for subrule_config in rule_config.get("rules", []):
+                    subrule = instantiate_rule(subrule_config)
+                    subrules.append(subrule)
+                
+                # Create composite rule
+                from dataset.core.rules.composite import CompositeRule
+                rule = CompositeRule(rules=subrules)
+            else:
+                # Normal rule
+                rule = instantiate_rule(rule_config)
+            
             rules.append(rule)
         
         return rules
@@ -151,7 +165,7 @@ class PuzzleGenerator:
             'config': self.config['puzzle_info']['name'],
             'metadata': {
                 'name': self.config['puzzle_info']['name'],
-                'difficulty': self.config['puzzle_info']['difficulty'],
+                'distractors difficulty': self.config['distractors']['difficulty'],
                 'description': self.config['puzzle_info']['description'],
                 'rule_types': [rule_config['type'] for rule_config in self.config['rules']]
             }

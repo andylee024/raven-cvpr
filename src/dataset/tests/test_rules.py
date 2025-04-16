@@ -10,13 +10,14 @@ from dataset.core.rules.spatial import RotationRule, ShiftRule
 from dataset.core.rules.composite import CompositeRule
 from dataset.utils.panel_utils import get_random_panel, get_uniform_triangle_panel
 from dataset.utils.visualization_utils import visualize_comparison
+from dataset.config.paths import RULE_TEST_OUTPUT_DIR
 
 class TestRules(unittest.TestCase):
     """Test suite for all rule implementations with visualization."""
     
     def setUp(self):
         """Set up test fixtures before each test."""
-        self.output_dir = "output/rule_tests"
+        self.output_dir = RULE_TEST_OUTPUT_DIR
         os.makedirs(self.output_dir, exist_ok=True)
         
         # Create panels for testing

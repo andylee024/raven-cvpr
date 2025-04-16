@@ -2,9 +2,12 @@
     "puzzle_info": {
       "name": "Increasing Shape Progression",
       "description": "Each shape gets progressively more edges as you move across each row",
+    },
+
+    "distractors": {
       "difficulty": "easy"
     },
-    
+
     "rules": [
       {
         "type": "attribute.progression",

@@ -2,9 +2,14 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
+from dataset.config.paths import TEST_OUTPUT_DIR
 
-def visualize_comparison(panels, titles, filename, output_dir="output_tests"):
+def visualize_comparison(panels, titles, filename, output_dir=None):
     """Visualize panels side by side for comparison."""
+    # Use default output directory if none provided
+    if output_dir is None:
+        output_dir = os.path.join(TEST_OUTPUT_DIR, "visualizations")
+    
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
     

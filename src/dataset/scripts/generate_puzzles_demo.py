@@ -7,11 +7,7 @@ Generate sample puzzles using the progression_color.json configuration.
 
 import os
 import sys
-from pathlib import Path
-
-# Add the project root to the Python path
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
+from dataset.config.paths import CONFIG_DIR, PUZZLE_OUTPUT_DIR
 
 from dataset.core.generators.puzzle_generator import PuzzleGenerator
 from dataset.core.visualization.puzzle_visualizer import PuzzleVisualizer
@@ -20,12 +16,12 @@ def main():
     """Generate sample progression color puzzles."""
 
     # user inputs
-    config_path = os.path.join(project_root, "src/dataset/config/progression_shape.json")
+    config_path = os.path.join(CONFIG_DIR, "shift_progression_1.json")
     num_puzzles = 3
     highlight_solution = True
     
     # Settings
-    output_dir = os.path.join(project_root, "output", "puzzle_generator_demo")
+    output_dir = PUZZLE_OUTPUT_DIR / "demo"
     os.makedirs(output_dir, exist_ok=True)
     
     # Create puzzle generator and visualizer

@@ -14,13 +14,14 @@ import sys
 
 from dataset.core.generators.distractor_generator import DistractorGenerator
 import dataset.utils.panel_utils as panel_utils
+from dataset.config.paths import DISTRACTOR_TEST_OUTPUT_DIR
 
 class TestDistractorGenerator(unittest.TestCase):
     """Test cases for DistractorGenerator."""
     
     def setUp(self):
         """Set up for each test."""
-        self.output_dir = "output/distractor_test"
+        self.output_dir = DISTRACTOR_TEST_OUTPUT_DIR
         os.makedirs(self.output_dir, exist_ok=True)
         
         # Create distractor generators with different difficulty levels

@@ -2,9 +2,12 @@
     "puzzle_info": {
       "name": "Increasing Number Progression",
       "description": "Each panel gets progressively more entities as you move across each row",
+    },
+
+    "distractors": {
       "difficulty": "easy"
     },
-    
+
     "rules": [
       {
         "type": "attribute.progression",

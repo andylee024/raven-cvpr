@@ -249,7 +249,7 @@ class PuzzleVisualizer:
             "value": puzzle['value'],
             "config": puzzle['config'],
             "description": puzzle['metadata']['description'],
-            "difficulty": puzzle['metadata']['difficulty']
+            "distractors difficulty": puzzle['metadata']['distractors difficulty']
         }
         
         # Save as JSON
