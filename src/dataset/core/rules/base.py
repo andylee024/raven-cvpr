@@ -1,30 +1,28 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from dataset.core.aot.attributes import ATTRIBUTES
 from dataset.core.aot.tensor_panel import TensorPanel
 
 class Rule(ABC):
     """Base class for all rules in RAVEN."""
     
-    def __init__(self, attr_name, required_panels=1):
-        """Initialize a rule."""
-
-        if attr_name not in ATTRIBUTES and attr_name != "number":
-            raise ValueError(f"Invalid attribute name: {attr_name}")
+    def __init__(self, rule_type, required_panels=1):
+        """Initialize a rule.
         
-        self.attribute = ATTRIBUTES[attr_name]
-        self.attribute_name = self.attribute.name
-        self.attribute_index = self.attribute.index
-        self.attribute_min = self.attribute.min_val
-        self.attribute_max = self.attribute.max_val
-
+        Args:
+            rule_type: Type of rule ("attribute", "spatial", "combined", etc.)
+            required_panels: Number of panels required to apply the rule
+        """
+        self.rule_type = rule_type
         self.required_panels = required_panels
 
     @abstractmethod
-    def apply(self, panels : List[TensorPanel]):
-        """Apply this rule to transform source into target.
+    def apply(self, panels: List[TensorPanel]) -> TensorPanel:
+        """Apply this rule to transform panels.
         
+        Args:
+            panels: List of input panels
+            
         Returns:
             Modified panel after rule application
         """
@@ -32,12 +30,8 @@ class Rule(ABC):
 
     @property
     def name(self):
-        """Get the rule name (for compatibility with rule_constraint).
-        
-        Returns:
-            Rule name without 'Rule' suffix
-        """
+        """Get the rule name (for compatibility with rule_constraint)."""
         name = self.__class__.__name__
         if name.endswith("Rule"):
-            name = name[:-4] + " " + self.attribute_name
-        return name
+            name = name[:-4]
+        return f"{name} {self.rule_type}"
